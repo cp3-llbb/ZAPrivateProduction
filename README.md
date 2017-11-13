@@ -3,7 +3,9 @@ Starting point: [MCM of one of our MiniAOD signal samples](https://cms-pdmv.cern
 
 ## Initial setup
 ```bash
-git clone https://github.com/cms-sw/genproductions.git
+git clone -o upstream git@github.com:cp3-llbb/ZAPrivateProduction.git
+pushd ZAPrivateProduction
+git clone -o upstream https://github.com/cms-sw/genproductions.git
 # Two CMSSW releases are needed:
 export SCRAM_ARCH=slc6_amd64_gcc481
 scram p CMSSW CMSSW_7_1_20_patch2
