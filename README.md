@@ -14,6 +14,16 @@ scram p CMSSW CMSSW_8_0_21
 ```
 
 ## Preparing gridpacks
+```bash
+# Fetch some cards to modify
+pushd genproduction
+git co 60013422c59c7c56c39441896f296cb371094777
+pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/higgs/HToZATo2L2B
+mkdir PrivateProd
+cp -r HToZATo2L2B_200_50 PrivateProd/template_HToZATo2L2B_200_50
+```
+
+# More details:
 ### CMSSW python fragment:
 ```python
 import FWCore.ParameterSet.Config as cms
