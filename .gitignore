@@ -1,2 +1,4 @@
 # GEN stuff
 genproductions/
+# editor files
+*.swp
