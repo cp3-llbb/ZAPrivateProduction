@@ -3,6 +3,7 @@ Starting point: [MCM of one of our MiniAOD signal samples](https://cms-pdmv.cern
 
 ## Initial setup
 ```bash
+cms_env
 git clone -o upstream git@github.com:cp3-llbb/ZAPrivateProduction.git
 pushd ZAPrivateProduction
 git clone -o upstream https://github.com/cms-sw/genproductions.git
@@ -25,9 +26,16 @@ popd
 popd
 ln -s -d genproductions/bin/MadGraph5_aMCatNLO/cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd .
 # Before preparing the actual cards we need to get the widths and other inputs from 2HDMC, so let's get Calculator42HDM first
-# FIXME
+pushd CMSSW_7_1_20_patch2/src
+wget https://raw.githubusercontent.com/cp3-llbb/Calculators42HDM/master/install_ingrid.sh
+source install_ingrid.sh
+cd ..
+# Test your install
+pushd CMSSW_7_1_20_patch2/src/cp3_llbb/Calculators42HDM
+python example/test.py
+popd
 # And now prepare all the cards
-# ./prepare_MG5_cards.py
+./prepare_MG5_cards.py
 ```
 
 # More details:
