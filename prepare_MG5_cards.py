@@ -56,11 +56,11 @@ def compute_widths_and_lambdas(mH, mA):
         outputFile = outputFile, muR = 1., muF = 1.)
     test.setpdf('NNPDF30_lo_as_0130_nf_4')
     test.computeBR()
-    wH = test.Hwidth
-    wA = test.Awidth
-    l2 = test.lambda_2
-    l3 = test.lambda_3
-    lR7 = test.lambda_7
+    wH = float(test.Hwidth)
+    wA = float(test.Awidth)
+    l2 = float(test.lambda_2)
+    l3 = float(test.lambda_3)
+    lR7 = float(test.lambda_7)
     os.chdir(cwd)
     return wH, wA, l2, l3, lR7
 
@@ -87,28 +87,28 @@ def prepare_cards(mH, mA, wH, wA, l2, l3, lR7):
         with open(filename(suffix, mH=mH, mA=mA), 'w+') as outf:
             for line in inf:
                 if template_line in line and 'higgs 1' in line:
-                    outf.write('{} higgs 1 {:f} # lambda 2\n'.format(template_line, l2))
+                    outf.write('{} higgs 1 {:.6f}\n'.format(template_line, l2))
                 elif template_line in line and 'higgs 2' in line:
-                    outf.write('{} higgs 2 {:f} # lambda 3\n'.format(template_line, l3))
+                    outf.write('{} higgs 2 {:.6f}\n'.format(template_line, l3))
                 elif template_line in line and 'higgs 3' in line:
-                    outf.write('{} higgs 3 {:f} # lambda Real 7\n'.format(template_line, lR7))
+                    outf.write('{} higgs 3 {:.6f}\n'.format(template_line, lR7))
                 elif template_line in line and 'mass 36' in line:
-                    outf.write('{} mass 36 {:.2f} # mass A\n'.format(template_line, mA))
+                    outf.write('{} mass 36 {:.2f}\n'.format(template_line, mA))
                 elif template_line in line and 'mass 35' in line:
-                    outf.write('{} mass 35 {:.2f} # mass H\n'.format(template_line, mH))
+                    outf.write('{} mass 35 {:.2f}\n'.format(template_line, mH))
                 elif template_line in line and 'width 36' in line:
-                    outf.write('{} width 36 {:f} # width A\n'.format(template_line, wA))
+                    outf.write('{} width 36 {:.6f}\n'.format(template_line, wA))
                 elif template_line in line and 'width 35' in line:
-                    outf.write('{} width 35 {:f} # width H\n'.format(template_line, wH))
+                    outf.write('{} width 35 {:.6f}\n'.format(template_line, wH))
                 else:
                     outf.write(line)
-            outf.write('# higgs 1: lambda 2')
-            outf.write('# higgs 2: lambda 3')
-            outf.write('# higgs 3: lambda Real 7')
-            outf.write('# mass 36: mA')
-            outf.write('# mass 35: mH')
-            outf.write('# width 36: mA')
-            outf.write('# width 35: mH')
+            outf.write('# higgs 1: lambda 2\n')
+            outf.write('# higgs 2: lambda 3\n')
+            outf.write('# higgs 3: lambda Real 7\n')
+            outf.write('# mass 36: mA\n')
+            outf.write('# mass 35: mH\n')
+            outf.write('# width 36: wA\n')
+            outf.write('# width 35: wH\n')
     # extramodels: no change needed
     suffix = 'extramodels'
     shutil.copyfile(filename(suffix, template=True), filename(suffix, mH=mH, mA=mA))
@@ -138,7 +138,7 @@ def prepare_all_MG5_cards():
         prepare_cards(mH, mA, wH, wA, l2, l3, lR7)
         # cms_env still needed
         # For preparing gridpacks cmsenv needs to be unset
-        # ./gridpack_generation.sh test cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_200p00_50p00 1nh
+        # ./gridpack_generation.sh HToZATo2L2B_200p00_50p00 cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_200p00_50p00 1nh
         break
 
 
