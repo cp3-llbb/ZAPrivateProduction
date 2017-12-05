@@ -4,5 +4,3 @@ CMSSW_*
 genproductions/
 # editor files
 *.swp
-# links to working dir
-PrivateProd

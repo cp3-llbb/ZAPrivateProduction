@@ -1,0 +1,10 @@
+# Settings for the Higgs potential 
+set param_card higgs 1 2.52395535e-01 # lambda 2
+set param_card higgs 2 2.61164577e-01 # lambda 3
+set param_card higgs 3 0.00000000e+00 # lambda Real 7
+# Settings for the scalar bosons masses 
+set param_card mass 36 50.00 # mass A
+set param_card mass 35 200.00 # mass H
+# Settings for the scalar widths 
+set param_card width 36 0.00319155088 # width A
+set param_card width 35 0.885476045 # width H

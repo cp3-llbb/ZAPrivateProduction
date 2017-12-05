@@ -49,6 +49,8 @@ def compute_widths_and_lambdas(mH, mA):
     mhc = max(mH, mA)
     m12 = math.sqrt(pow(mhc, 2) * tb / (1 + pow(tb, 2)))
     outputFile = 'out_mH-{}_mA-{}.dat'.format(mass_to_string(mH), mass_to_string(mA))
+    cwd = os.getcwd()
+    os.chdir(CMSSW_Calculators42HDM)
     test = Calc2HDM(mode = mode, sqrts = sqrts, type = type,
         tb = tb, m12 = m12, mh = mh, mH = mH, mA = mA, mhc = mhc, sba = sba,
         outputFile = outputFile, muR = 1., muF = 1.)
@@ -59,6 +61,7 @@ def compute_widths_and_lambdas(mH, mA):
     l2 = test.lambda_2
     l3 = test.lambda_3
     lR7 = test.lambda_7
+    os.chdir(cwd)
     return wH, wA, l2, l3, lR7
 
 def filename(suffix, template=False, mH=None, mA=None):
@@ -71,7 +74,7 @@ def filename(suffix, template=False, mH=None, mA=None):
         masses = '{}_{}'.format(mass_to_string(mH), mass_to_string(mA))
     return 'PrivateProd/' + tmp + 'HToZATo2L2B_' + masses + '/HToZATo2L2B_' + masses + '_' + suffix + '.dat'
 
-def prepare_card(mH, mA, wH, wA, l2, l3, lR7):
+def prepare_cards(mH, mA, wH, wA, l2, l3, lR7):
     process_name = 'HToZATo2L2B_{}_{}'.format(mass_to_string(mH), mass_to_string(mA))
     directory = 'PrivateProd/' + process_name
     # First: create directory if it doesn't exist
@@ -114,6 +117,9 @@ def prepare_card(mH, mA, wH, wA, l2, l3, lR7):
     # run_card: no change needed
     suffix = 'run_card'
     shutil.copyfile(filename(suffix, template=True), filename(suffix, mH=mH, mA=mA))
+    # exit
+    print 'MG5 files prepared in PrivateProd/HToZATo2L2B_{}_{}'.format(mass_to_string(mH), mass_to_string(mA))
+    return
 
 def prepare_all_MG5_cards():
     grid = {}
@@ -121,14 +127,12 @@ def prepare_all_MG5_cards():
     for H, A in grid['fullsim']:
         mH = float_to_mass(H)
         mA = float_to_mass(A)
-        cwd = os.getcwd()
-        os.chdir(CMSSW_Calculators42HDM)
-        print 'compute widths and lambdas'
         wH, wA, l2, l3, lR7 = compute_widths_and_lambdas(mH, mA)
         os.chdir(cwd)
-        print wH, wA, l2, l3, lR7
-        print 'prepare the cards'
-        prepare_card(mH, mA, wH, wA, l2, l3, lR7)
+        prepare_cards(mH, mA, wH, wA, l2, l3, lR7)
+        # cms_env still needed
+        # For preparing gridpacks cmsenv needs to be unset
+        # ./gridpack_generation.sh test cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_200p00_50p00 1nh
         break
 
 
