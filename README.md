@@ -17,14 +17,14 @@ scram p CMSSW CMSSW_8_0_21
 ## Preparing gridpacks
 ```bash
 # Fetch some cards to modify
+mkdir PrivateProd
 pushd genproductions
 git co 60013422c59c7c56c39441896f296cb371094777
 pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/higgs/HToZATo2L2B
-mkdir PrivateProd
+ln -s -d ../../../../../../../../PrivateProd .
 cp -r HToZATo2L2B_200_50 PrivateProd/template_HToZATo2L2B_200_50
 popd
 popd
-ln -s -d genproductions/bin/MadGraph5_aMCatNLO/cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd .
 # Before preparing the actual cards we need to get the widths and other inputs from 2HDMC, so let's get Calculator42HDM first
 pushd CMSSW_7_1_20_patch2/src
 wget https://raw.githubusercontent.com/cp3-llbb/Calculators42HDM/master/install_ingrid.sh

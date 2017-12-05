@@ -128,7 +128,6 @@ def prepare_all_MG5_cards():
         mH = float_to_mass(H)
         mA = float_to_mass(A)
         wH, wA, l2, l3, lR7 = compute_widths_and_lambdas(mH, mA)
-        os.chdir(cwd)
         prepare_cards(mH, mA, wH, wA, l2, l3, lR7)
         # cms_env still needed
         # For preparing gridpacks cmsenv needs to be unset
