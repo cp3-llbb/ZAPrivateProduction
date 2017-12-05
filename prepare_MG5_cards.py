@@ -87,21 +87,28 @@ def prepare_cards(mH, mA, wH, wA, l2, l3, lR7):
         with open(filename(suffix, mH=mH, mA=mA), 'w+') as outf:
             for line in inf:
                 if template_line in line and 'higgs 1' in line:
-                    outf.write('{} higgs 1 {} # lambda 2\n'.format(template_line, l2))
+                    outf.write('{} higgs 1 {:f} # lambda 2\n'.format(template_line, l2))
                 elif template_line in line and 'higgs 2' in line:
-                    outf.write('{} higgs 2 {} # lambda 3\n'.format(template_line, l3))
+                    outf.write('{} higgs 2 {:f} # lambda 3\n'.format(template_line, l3))
                 elif template_line in line and 'higgs 3' in line:
-                    outf.write('{} higgs 3 {} # lambda Real 7\n'.format(template_line, lR7))
+                    outf.write('{} higgs 3 {:f} # lambda Real 7\n'.format(template_line, lR7))
                 elif template_line in line and 'mass 36' in line:
                     outf.write('{} mass 36 {:.2f} # mass A\n'.format(template_line, mA))
                 elif template_line in line and 'mass 35' in line:
                     outf.write('{} mass 35 {:.2f} # mass H\n'.format(template_line, mH))
                 elif template_line in line and 'width 36' in line:
-                    outf.write('{} width 36 {} # width A\n'.format(template_line, wA))
+                    outf.write('{} width 36 {:f} # width A\n'.format(template_line, wA))
                 elif template_line in line and 'width 35' in line:
-                    outf.write('{} width 35 {} # width H\n'.format(template_line, wH))
+                    outf.write('{} width 35 {:f} # width H\n'.format(template_line, wH))
                 else:
                     outf.write(line)
+            outf.write('# higgs 1: lambda 2')
+            outf.write('# higgs 2: lambda 3')
+            outf.write('# higgs 3: lambda Real 7')
+            outf.write('# mass 36: mA')
+            outf.write('# mass 35: mH')
+            outf.write('# width 36: mA')
+            outf.write('# width 35: mH')
     # extramodels: no change needed
     suffix = 'extramodels'
     shutil.copyfile(filename(suffix, template=True), filename(suffix, mH=mH, mA=mA))
