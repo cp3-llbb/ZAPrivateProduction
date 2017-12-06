@@ -36,13 +36,13 @@ pushd bin/MadGraph5_aMCatNLO
 ./gridpack_generation.sh HToZATo2L2B_1000p00_50p00 cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_1000p00_50p00 1nh
 ./gridpack_generation.sh HToZATo2L2B_1000p00_200p00 cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_1000p00_200p00 1nh
 ./gridpack_generation.sh HToZATo2L2B_1000p00_500p00 cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_1000p00_500p00 1nh
-skipping point (mH, mA) = (120.0, 30.0)
-skipping point (mH, mA) = (120.0, 34.49)
-skipping point (mH, mA) = (120.0, 39.54)
-skipping point (mH, mA) = (120.0, 45.19)
-skipping point (mH, mA) = (120.0, 51.48)
-skipping point (mH, mA) = (120.0, 58.4)
-skipping point (mH, mA) = (120.0, 65.77)
+# skipping point (mH, mA) = (120.0, 30.0)
+# skipping point (mH, mA) = (120.0, 34.49)
+# skipping point (mH, mA) = (120.0, 39.54)
+# skipping point (mH, mA) = (120.0, 45.19)
+# skipping point (mH, mA) = (120.0, 51.48)
+# skipping point (mH, mA) = (120.0, 58.4)
+# skipping point (mH, mA) = (120.0, 65.77)
 ./gridpack_generation.sh HToZATo2L2B_127p34_30p00 cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_127p34_30p00 1nh
 ./gridpack_generation.sh HToZATo2L2B_127p34_34p66 cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_127p34_34p66 1nh
 ./gridpack_generation.sh HToZATo2L2B_127p34_40p10 cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_127p34_40p10 1nh

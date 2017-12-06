@@ -154,7 +154,7 @@ def prepare_all_MG5_cards():
             mH = float_to_mass(H)
             mA = float_to_mass(A)
             if mH < 125.:
-                s = 'skipping point (mH, mA) = ({}, {})'.format(mH, mA)
+                s = '# skipping point (mH, mA) = ({}, {})'.format(mH, mA)
                 print s
                 outf.write(s + '\n')
                 continue
