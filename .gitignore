@@ -1,6 +1,6 @@
+# CMSSW stuff
+CMSSW_*
 # GEN stuff
 genproductions/
 # editor files
 *.swp
-# links to working dir
-PrivateProd

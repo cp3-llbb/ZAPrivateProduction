@@ -3,6 +3,7 @@ Starting point: [MCM of one of our MiniAOD signal samples](https://cms-pdmv.cern
 
 ## Initial setup
 ```bash
+cms_env
 git clone -o upstream git@github.com:cp3-llbb/ZAPrivateProduction.git
 pushd ZAPrivateProduction
 git clone -o upstream https://github.com/cms-sw/genproductions.git
@@ -16,18 +17,27 @@ scram p CMSSW CMSSW_8_0_21
 ## Preparing gridpacks
 ```bash
 # Fetch some cards to modify
+mkdir PrivateProd
 pushd genproductions
 git co 60013422c59c7c56c39441896f296cb371094777
 pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/higgs/HToZATo2L2B
-mkdir PrivateProd
+ln -s -d ../../../../../../../../PrivateProd .
 cp -r HToZATo2L2B_200_50 PrivateProd/template_HToZATo2L2B_200_50
 popd
 popd
-ln -s -d genproductions/bin/MadGraph5_aMCatNLO/cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd .
 # Before preparing the actual cards we need to get the widths and other inputs from 2HDMC, so let's get Calculator42HDM first
-# FIXME
+pushd CMSSW_7_1_20_patch2/src
+wget https://raw.githubusercontent.com/cp3-llbb/Calculators42HDM/master/install_ingrid.sh
+source install_ingrid.sh
+cd ..
+# Test your install
+pushd CMSSW_7_1_20_patch2/src/cp3_llbb/Calculators42HDM
+python example/test.py
+popd
 # And now prepare all the cards
-# ./prepare_MG5_cards.py
+./prepare_MG5_cards.py
+# Separately, on lxplus, prepare all the gridpacks:
+./prepare_all_gridpacks.sh
 ```
 
 # More details:
