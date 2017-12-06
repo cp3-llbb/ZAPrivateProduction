@@ -150,13 +150,17 @@ def prepare_all_MG5_cards():
         outf.write('popd\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO\n')
         outf.write('# Now for the real gridpack production\n')
-        for H, A in grid['fullsim']:
+        for H, A in (grid['fullsim'] + grid['ellipses_rho_1']):
             mH = float_to_mass(H)
             mA = float_to_mass(A)
+            if mH < 125.:
+                s = 'skipping point (mH, mA) = ({}, {})'.format(mH, mA)
+                print s
+                outf.write(s + '\n')
+                continue
             wH, wA, l2, l3, lR7 = compute_widths_and_lambdas(mH, mA)
             prepare_cards(mH, mA, wH, wA, l2, l3, lR7)
             outf.write('./gridpack_generation.sh HToZATo2L2B_{0}_{1} cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_{0}_{1} 1nh\n'.format(mass_to_string(mH), mass_to_string(mA)))
-            break
         outf.write('set +x\n')
     os.chmod('prepare_all_gridpacks.sh', os.stat('prepare_all_gridpacks.sh').st_mode | stat.S_IXUSR)
     print 'All commands prepared in ./prepare_all_gridpacks.sh'
