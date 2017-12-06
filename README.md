@@ -37,7 +37,8 @@ popd
 # And now prepare all the cards
 ./prepare_MG5_cards.py
 # Separately, on lxplus, prepare all the gridpacks:
-./prepare_all_gridpacks.sh
+wget https://raw.githubusercontent.com/cp3-llbb/ZAPrivateProduction/master/prepare_all_gridpacks.sh
+bash prepare_all_gridpacks.sh
 ```
 
 # More details:
