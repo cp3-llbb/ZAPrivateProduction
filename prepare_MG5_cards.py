@@ -3,6 +3,7 @@ import os
 import math
 import json
 import shutil
+import stat
 from cp3_llbb.Calculators42HDM.Calc2HDM import *
 CMSSW_Calculators42HDM = 'CMSSW_7_1_20_patch2/src/cp3_llbb/Calculators42HDM'
 MASSES_TEMPLATE='200_50'
@@ -131,15 +132,33 @@ def prepare_cards(mH, mA, wH, wA, l2, l3, lR7):
 def prepare_all_MG5_cards():
     grid = {}
     grid = which_points(grid)
-    for H, A in grid['fullsim']:
-        mH = float_to_mass(H)
-        mA = float_to_mass(A)
-        wH, wA, l2, l3, lR7 = compute_widths_and_lambdas(mH, mA)
-        prepare_cards(mH, mA, wH, wA, l2, l3, lR7)
-        # cms_env still needed
-        # For preparing gridpacks cmsenv needs to be unset
-        # ./gridpack_generation.sh HToZATo2L2B_200p00_50p00 cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_200p00_50p00 1nh
-        break
+    with open('prepare_all_gridpacks.sh', 'w+') as outf:
+        outf.write('# Please run the following on lxplus\n')
+        outf.write('# Notes:\n')
+        outf.write('# - the instructions will not run on ingrid\n')
+        outf.write('# - you must not have setup any cmsenv\n')
+        outf.write('# - each gridpack generation should take about 5 minutes\n')
+        outf.write('set -x\n')
+        outf.write('git clone -o upstream git@github.com:cp3-llbb/ZAPrivateProduction.git\n')
+        outf.write('pushd ZAPrivateProduction\n')
+        outf.write('git clone -o upstream https://github.com/cms-sw/genproductions.git\n')
+        outf.write('pushd genproductions\n')
+        outf.write('git co 60013422c59c7c56c39441896f296cb371094777\n')
+        outf.write('pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/higgs/HToZATo2L2B\n')
+        outf.write('ln -s -d ../../../../../../../../PrivateProd .\n')
+        outf.write('popd\n')
+        outf.write('pushd bin/MadGraph5_aMCatNLO\n')
+        outf.write('# Now for the real gridpack production\n')
+        for H, A in grid['fullsim']:
+            mH = float_to_mass(H)
+            mA = float_to_mass(A)
+            wH, wA, l2, l3, lR7 = compute_widths_and_lambdas(mH, mA)
+            prepare_cards(mH, mA, wH, wA, l2, l3, lR7)
+            outf.write('./gridpack_generation.sh HToZATo2L2B_{0}_{1} cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd/HToZATo2L2B_{0}_{1} 1nh\n'.format(mass_to_string(mH), mass_to_string(mA)))
+            break
+        outf.write('set +x\n')
+    os.chmod('prepare_all_gridpacks.sh', os.stat('prepare_all_gridpacks.sh').st_mode | stat.S_IXUSR)
+    print 'All commands prepared in ./prepare_all_gridpacks.sh'
 
 
 

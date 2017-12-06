@@ -36,6 +36,8 @@ python example/test.py
 popd
 # And now prepare all the cards
 ./prepare_MG5_cards.py
+# Separately, on lxplus, prepare all the gridpacks:
+./prepare_all_gridpacks.sh
 ```
 
 # More details:
