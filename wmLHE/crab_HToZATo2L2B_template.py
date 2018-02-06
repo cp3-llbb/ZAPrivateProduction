@@ -23,7 +23,7 @@ config.Data.unitsPerJob = 10000
 config.Data.totalUnits = 100000 # 100k
 config.Data.splitting = 'EventBased'
 config.Data.outputPrimaryDataset = 'HToZATo2L2B_template'
-config.Data.outputDatasetTag = 'test02'
+config.Data.outputDatasetTag = 'prod-v0'
 config.Data.outLFNDirBase = '/store/user/obondu/'
 
 config.section_('Site')
