@@ -35,10 +35,11 @@ def prepare_all_wmLHE_fragments_and_config():
     # copy executable script and make it executable
     copy_to_cmssw('download_gridpack_then_cmsRun.sh', setEXE = True)
     # loop over mass hypotheses and create the files
-    for p in grid['ellipses_rho_1']:
+    g = grid['ellipses_rho_1']
+    for ip, p in enumerate(g):
+        print "Preparing configs for point", point_to_string(p), "(%i / %i)" % (ip, len(g))
         copy_to_cmssw('HToZATo2L2B_template_wmLHE_cfg.py', replaceTemplateString=point_to_string(p))
         copy_to_cmssw('crab_HToZATo2L2B_template.py', replaceTemplateString=point_to_string(p))
-        print point_to_string(p)
     return
 
 if __name__ == '__main__':
