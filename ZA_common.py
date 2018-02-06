@@ -1,6 +1,10 @@
 #!/bin/env python
 import json
 
+def string_to_mass(s):
+    s = s.replace('p', '.')
+    return float(s)
+
 def which_points(grid):
     grid['fullsim'] = [
             ( 200, 50), ( 200, 100),
@@ -20,6 +24,13 @@ def which_points(grid):
         d = json.load(f)
         # format the output into tuples
         grid['ellipses_rho_0p5'] = [(mH, mA,) for mA, mH in d]
+    with open('data/list_gridpacks.txt') as f:
+        grid['gridpacks_available'] = []
+        for line in f:
+            mH, mA = line.split('_')[1:3]
+            mH = string_to_mass(mH)
+            mA = string_to_mass(mA)
+            grid['gridpacks_available'].append((mH, mA,))
     return grid
 
 def mass_to_string(m):

@@ -56,7 +56,7 @@ popd
 ./prepare_wmLHE_step.py
 # Submit all the tasks
 pushd CMSSW_7_1_20_patch2/src
-for j in `'ls' crab_*py`; do echo -e "\n## submitting ${j}"; crab submit ${j}; sleep 0.2; break; done
+for j in `'ls' crab_*py`; do echo -e "\n## submitting ${j}"; crab submit ${j}; done
 ```
 
 # More details and links for reference:
