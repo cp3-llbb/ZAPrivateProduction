@@ -4,3 +4,5 @@ CMSSW_*
 genproductions/
 # editor files
 *.swp
+# python stuff
+*.pyc

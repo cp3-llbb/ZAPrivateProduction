@@ -41,7 +41,25 @@ wget https://raw.githubusercontent.com/cp3-llbb/ZAPrivateProduction/master/prepa
 bash prepare_all_gridpacks.sh
 ```
 
-# More details:
+## wmLHE step
+```bash
+# template CRAB and CMSSW configs have been created with 
+# cmsDriver.py Configuration/GenProduction/python/HToZATo2L2B_200p00_50p00_wmLHE.py --fileout file:HToZATo2L2B_200p00_50p00_wmLHE.root --mc --eventcontent LHE --datatier LHE --conditions MCRUN2_71_V1::All --step LHE --python_filename HToZATo2L2B_200p00_50p00_wmLHE_cfg.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n 10000
+# These templates are stored in the wmLHE directory
+# NB: a dedicated script `download_gridpack_then_cmsRun.sh` has been created to hack around the fact that I cannot directly store gridpacks on eos, so I'm using this executable to first download the gridpack before running cmsRun
+
+# First we need to get a more recent python version: let's do a cmsenv first
+pushd CMSSW_7_1_20_patch2/src
+cmsenv
+popd
+# Prepare all the jobs (CMSSW and CRAB configs)
+./prepare_wmLHE_step.py
+# Submit all the tasks
+pushd CMSSW_7_1_20_patch2/src
+for j in `'ls' crab_*py`; do echo -e "\n## submitting ${j}"; crab submit ${j}; done
+```
+
+# More details and links for reference:
 ### CMSSW python fragment:
 ```python
 import FWCore.ParameterSet.Config as cms
