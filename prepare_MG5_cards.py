@@ -141,7 +141,7 @@ def prepare_all_MG5_cards():
         outf.write('set -x\n')
         outf.write('git clone -o upstream git@github.com:cp3-llbb/ZAPrivateProduction.git\n')
         outf.write('pushd ZAPrivateProduction\n')
-        outf.write('git remote add origin git@github.com:OlivierBondu/ZAPrivateProduction.git\n')
+        outf.write('git remote add origin git@github.com:alesaggio/ZAPrivateProduction.git\n')
         outf.write('git clone -o upstream https://github.com/cms-sw/genproductions.git\n')
         outf.write('pushd genproductions\n')
         outf.write('git co 60013422c59c7c56c39441896f296cb371094777\n')
