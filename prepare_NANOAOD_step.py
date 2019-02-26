@@ -32,9 +32,10 @@ def prepare_all_NANOAOD():
         for line in f:
             dataset = line.strip()
             pd = dataset.split('/')[1]
-            masspoint_list = pd.split('_')
-            masspoint = masspoint_list[1]+'_'+masspoint_list[2]
+            #masspoint_list = pd.split('_')
+            #masspoint = masspoint_list[1]+'_'+masspoint_list[2]
             copy_to_cmssw('crab_template_NANOAOD.py', replaceTemplateString = pd, replacedataset = dataset, replaceTag = tag)
+            #copy_to_cmssw('template_NANOAOD_cfg.py', replaceTemplateString = pd, replacedataset = dataset, replaceTag = tag)
             copy_to_cmssw('template_NANOAOD_cfg.py', replaceTemplateString = pd, replacedataset = dataset, replaceTag = tag)
              
         

@@ -19,7 +19,7 @@ config.Data.publication = True
 config.Data.unitsPerJob = 1
 config.Data.splitting = 'FileBased'
 config.Data.outputDatasetTag = 'DR_step1_TAG'
-config.Data.outLFNDirBase = '/store/user/asaggio/'
+config.Data.outLFNDirBase = '/store/user/kjaffel/'
 
 config.section_('Site')
 config.Site.storageSite = 'T2_BE_UCL'
