@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: step1 --filein dbs:/HToZATo2L2B_MH-1000_MA-200_13TeV-madgraph-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v1/MINIAODSIM --fileout file:HIG-RunIISummer16NanoAODv4-00300.root --mc --eventcontent NANOEDMAODSIM --datatier NANOAODSIM --processName 14Dec2018 --conditions 102X_mcRun2_asymptotic_v6 --customise_commands process.particleLevelSequence.remove(process.genParticles2HepMCHiggsVtx);process.particleLevelSequence.remove(process.rivetProducerHTXS);process.particleLevelTables.remove(process.HTXSCategoryTable) --step NANO --nThreads 2 --era Run2_2016,run2_nanoAOD_94X2016 --python_filename HIG-RunIISummer16NanoAODv4-00300_1_cfg.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n 5236
+# with command line options: step1 --filein dbs:/HToZATo2L2B_MH-200_MA-50_13TeV-madgraph-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v1/MINIAODSIM --fileout file:HIG-RunIISummer16NanoAODv4-00309.root --mc --eventcontent NANOEDMAODSIM --datatier NANOAODSIM --processName 14Dec2018 --conditions 102X_mcRun2_asymptotic_v6 --customise_commands process.particleLevelSequence.remove(process.genParticles2HepMCHiggsVtx);process.particleLevelSequence.remove(process.rivetProducerHTXS);process.particleLevelTables.remove(process.HTXSCategoryTable) --step NANO --nThreads 2 --era Run2_2016,run2_nanoAOD_94X2016 --python_filename HIG-RunIISummer16NanoAODv4-00309_1_cfg.py --no_exec --customise Configuration/DataProcessing/Utils.addMonitoring -n 5236
 import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
@@ -22,12 +22,12 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1)
+    input = cms.untracked.int32(10)
 )
 
 # Input source
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('file:HIG-RunIISummer16MiniAODv2-01385_98.root'),
+    fileNames = cms.untracked.vstring('/store/mc/RunIISummer16MiniAODv3/HToZATo2L2B_MH-200_MA-50_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_94X_mcRun2_asymptotic_v3-v1/90000/A6402AB3-1E23-E911-867C-0242AC130002.root'),
     secondaryFileNames = cms.untracked.vstring()
 )
 
@@ -37,7 +37,7 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    annotation = cms.untracked.string('step1 nevts:5236'),
+    annotation = cms.untracked.string('step1 nevts:10'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
@@ -51,7 +51,7 @@ process.NANOEDMAODSIMoutput = cms.OutputModule("PoolOutputModule",
         dataTier = cms.untracked.string('NANOAODSIM'),
         filterName = cms.untracked.string('')
     ),
-    fileName = cms.untracked.string('file:HIG-RunIISummer16NanoAODv4-00300.root'),
+    fileName = cms.untracked.string('file:HIG-RunIISummer16NanoAODv4-00309.root'),
     outputCommands = process.NANOAODSIMEventContent.outputCommands
 )
 
