@@ -33,7 +33,7 @@ define l+ = e+ mu+
 define l- = e- mu-
 define vl = ve vm vt
 define vl~ = ve~ vm~ vt~
-import model 2HDM4MG5-may15
+import model 2HDMtII_NLO
 set group_subprocesses Auto
 set ignore_six_quark_processes False
 set gauge unitary
@@ -45,6 +45,6 @@ define j = g u c d s u~ c~ d~ s~
 define vl = ve vm vt
 define vl~ = ve~ vm~ vt~
 # h3 = pseudo-scalar A ;  h2 = Heavy neutral Higgs H 
-generate p p > h3 z/h1 HG=1, h3 > b b~, z > l+ l-   # gg fusion + qq annhilation  
-add process p p > h2 > h3 Z b b~ # bb -associated production : 4flavor scheme 
+generate p p > h3 Z [QCD]  # gg fusion and qq annhilation
+add process p p > h2 > h3 Z b b~ [QCD] # bb -associated production : 4flavor scheme 
 output HToZATo2L2B_800p00_200p00_2p00
