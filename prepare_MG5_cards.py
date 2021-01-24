@@ -277,7 +277,7 @@ def prepare_all_MG5_cards():
                 wH, wA, l2, l3, lR7, sinbma, tb = compute_widths_and_lambdas(mH, mA, mh, tb)
                 prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb)
                 
-                name = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(mH), smpdetails)
+                name = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
                 carddir ="cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd_run2/{}".format(name)
                 workqueue='{}'.format(options.queue)
                 scram_arch="slc7_amd64_gcc820"
