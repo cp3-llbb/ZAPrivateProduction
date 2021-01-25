@@ -32,7 +32,7 @@
 # These values are ignored for fixed order runs                        *
 #***********************************************************************
   2000	= nevents ! Number of unweighted events requested 
-  -1.0	= req_acc ! Required accuracy (-1=auto determined from nevents)
+  0.001	= req_acc ! Required accuracy (-1=auto determined from nevents)
   -1	= nevt_job ! Max number of events per job in event generation. 
                  !  (-1= no split).
 #***********************************************************************
@@ -101,7 +101,7 @@
             ! booleans of equal length to dynamical_scale_choice to
             ! specify for which choice to include scale dependence.
   False	= reweight_pdf ! Reweight to get PDF uncertainty. Should be a
-            ! list booleans of equal length to lhaid to specify for
+            ! list booleans of equal length to LHAPDF ID to specify for
             !  which PDF set to include the uncertainties.
   -1.0	= rw_fscale_down  ! lower bound for fact scale variations
   -1.0	= rw_rscale_down  ! upper bound for fact scale variations
@@ -186,10 +186,12 @@
 #***********************************************************************
   0	= iappl ! aMCfast switch (0=OFF, 1=prepare grids, 2=fill grids)
 #***********************************************************************
+## Maximal PDG code for quark to be considered a jet when applying cuts.*
+### At least all massless quarks of the model should be included here.  *
+  4	= maxjetflavor 
 #********************************************************************* 
 #  Additional hidden parameters
 #*********************************************************************
-  systematics	= systematics_program # Choose which program to use for systematics computation: none, systematics
-  ['--mur=0.5,1,2', '--muf=0.5,1,2', '--together=mur,muf,dyn', '--pdf=errorset']	= systematics_arguments # Choose the argment to pass to the systematics command. like --mur=0.25,1,4. Look at the help of the systematics function for more details.
-  {'default': False}	= mxx_only_part_antipart
-  4	= maxjetflavor 
+  #systematics	= systematics_program # Choose which program to use for systematics computation: none, systematics
+  #['--mur=0.5,1,2', '--muf=0.5,1,2', '--together=mur,muf,dyn', '--pdf=errorset']	= systematics_arguments # Choose the argment to pass to the systematics command. like --mur=0.25,1,4. Look at the help of the systematics function for more details.
+  #{'default': False}	= mxx_only_part_antipart
