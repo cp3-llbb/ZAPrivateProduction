@@ -184,22 +184,7 @@
 # Syscalc is deprecated but to see the associate options type'update syscalc'
 #! see: https://cp3.irmp.ucl.ac.be/projects/madgraph/wiki/Systematics#Systematicspythonmodule
 #*********************************************************************
-  #True	= use_syst ! Enable systematics studies
-  #systematics	= systematics_program ! none, systematics [python], SysCalc [depreceted, C++]
-  #['--mur=0.5,1,2', '--muf=0.5,1,2', '--pdf=errorset', '--alps=0.5,1,2'] = systematics_arguments 
-#********************************************************************* 
-#  Additional hidden parameters
+# True	= use_syst ! Enable systematics studies
+# systematics	= systematics_program ! none, systematics [python], SysCalc [depreceted, C++]
+# ['--mur=0.5,1,2', '--muf=0.5,1,2', '--pdf=errorset', '--alps=0.5,1,2'] = systematics_arguments 
 #*********************************************************************
-  10.0	= pta 
-  -1.0	= ptjmax 
-  0.1	= dral 
-  0.0	= drjl 
-  0.0	= drbj 
-  0.0	= drjj 
-  -1.0	= etaa 
-  0.0	= draa 
-  0.0	= drab 
-  0.1	= draj 
-  0.0	= misset 
-  0.0	= xptj 
-  0.0	= xpta 

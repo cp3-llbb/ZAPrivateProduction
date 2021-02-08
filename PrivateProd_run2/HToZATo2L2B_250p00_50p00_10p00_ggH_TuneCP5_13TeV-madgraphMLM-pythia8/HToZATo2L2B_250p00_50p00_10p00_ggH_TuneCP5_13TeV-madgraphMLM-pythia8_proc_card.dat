@@ -44,5 +44,6 @@ define p = g u c d s u~ c~ d~ s~
 define j = g u c d s u~ c~ d~ s~
 define vl = ve vm vt
 define vl~ = ve~ vm~ vt~
-generate p p > h3 Z [QCD]@0 #gg fusion -loop induced
+#gg fusion -loop induced
+generate p p > h2 > h3 Z [QCD] @0
 output HToZATo2L2B_250p00_50p00_10p00_ggH_TuneCP5_13TeV-madgraphMLM-pythia8
