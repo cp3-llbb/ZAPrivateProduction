@@ -34,15 +34,7 @@ define l- = e- mu-
 define vl = ve vm vt
 define vl~ = ve~ vm~ vt~
 import model 2HDMtII_NLO
-set group_subprocesses Auto
-set ignore_six_quark_processes False
 set gauge unitary
-set complex_mass_scheme False
-define l+ = e+ mu+
-define l- = e- mu-
-define p = g u c d s u~ c~ d~ s~
-define j = g u c d s u~ c~ d~ s~
-define vl = ve vm vt
-define vl~ = ve~ vm~ vt~
-generate p p > h2 > h3 Z b b~ [QCD] @0 # bb -associated production : 4flavor scheme
+# bb -associated production : 4flavor scheme
+generate p p > h2 > h3 Z b b~ [QCD] @0 
 output HToZATo2L2B_300p00_50p00_1p50_bbH4F_TuneCP5_13TeV-amcatnloFXFX-pythia8

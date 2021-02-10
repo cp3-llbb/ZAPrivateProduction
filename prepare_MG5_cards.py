@@ -44,10 +44,10 @@ parser.add_argument('-o', '--order', action='store',
                                       default=None, 
                                       choices=['LO', 'NLO'], 
                                       help='production shceme')
-# better leave these two out !
+# If you are not sure about your pdf sets , better use DEFAULT !
 parser.add_argument('-pdf', '--lhapdfsets',   action='store', 
                                               dest='lhapdfsets', 
-                                              default=None, 
+                                              default='DEFAULT', 
                                               type=str, 
                                               help=''' Few links may help you to make the choice:'\n
                                                        https://twiki.cern.ch/twiki/bin/view/CMS/QuickGuideMadGraph5aMCatNLO#PDF_Choice_for_2017_production\n
@@ -95,7 +95,6 @@ def float_to_mass(m):
     return float(r)
 
 def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
-    # Alex's PhD thesis parameters
     global options
     global lhaid
 
@@ -123,13 +122,13 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     #os.chdir(os.path.join(CMSSW_Calculators42HDM, 'out'))
     os.chdir(CMSSW_Calculators42HDM)
     res = Calc2HDM(mode = mode, sqrts = sqrts, type = type,
-        tb = tb, m12 = m12, mh = mh, mH = mH, mA = mA, mhc = mhc, sba = sinbma,
-        outputFile = outputFile, muR = 1., muF = 1.)
+                   tb = tb, m12 = m12, mh = mh, mH = mH, mA = mA, mhc = mhc, sba = sinbma,
+                   outputFile = outputFile, muR = 1., muF = 1.)
    
     if options.lhapdfsets == 'DEFAULT':
         logger.warning( 'The following ** $DEFAULT_PDF_SETS ** is shortcuts to have the PDF sets automatically added to the run_card at run time to avoid specifying them directly\n. Be careful this is valid at both LO and NLO !\n')
         lhaid = '$DEFAULT_PDF_SETS'
-    elif options.lhapdfsets is None: 
+    elif options.lhapdfsets is 'NNPDF31': 
         if options.scheme == '4FS':
             logger.info( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite 4Flavor-scheme set will be used instead\n 
                             LHA Name = NNPDF31_nnlo_as_0118_nf_4_mc_hessian\n 
@@ -147,8 +146,8 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
             res.setpdf('NNPDF31_nnlo_as_0118_mc_hessian_pdfas')
             lhaid = 325300
     else:
-        lhaid = options.lhaid
         res.setpdf(options.lhapdfsets )
+        lhaid = options.lhaid
     
     res.computeBR()
     wH = float(res.Hwidth)
@@ -156,6 +155,7 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     l2 = float(res.lambda_2)
     l3 = float(res.lambda_3)
     lR7 = float(res.lambda_7)
+    print( l2, l3, lR7 )
     AtoZhBR = res.AtoZhBR
     AtobbBR = res.AtobbBR
     HtoZABR = res.HtoZABR
@@ -233,21 +233,19 @@ def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
                     outf.write('output HToZATo2L2B_{}_{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
                 else:
                     outf.write(line)
-    # run_card: no change needed
     suffix = 'run_card'
     with open(filename(suffix, template=True), 'r') as inf:
          with open(filename(suffix, mH=mH, mA=mA, tb=tb), 'w+') as outf:
              for line in inf:
                  if 'lhaid' in line:
                      outf.write('{} = lhaid ! if pdlabel=lhapdf, this is the lhapdf number\n'.format(lhaid))
-                     if options.lhaid is '$DEFAULT_PDF_SETS':
+                     if lhaid is '$DEFAULT_PDF_SETS':
                          outf.write('$DEFAULT_PDF_MEMBERS  = reweight_PDF\n')
                  else:
                      outf.write(line)
     suffix = 'madspin_card'
     shutil.copyfile(filename(suffix, template=True), filename(suffix, mH=mH, mA=mA, tb=tb))
     print ('MG5 files prepared in PrivateProd_run2/HToZATo2L2B_{}_{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
-    # exit
     return
 
 def prepare_all_MG5_cards():
@@ -278,16 +276,22 @@ def prepare_all_MG5_cards():
         outf.write('git checkout origin/master\n')
         outf.write('DIR= genproductions\n')
         outf.write('if [[ ! -d "$DIR" ]]; then\n')
-        outf.write('    git clone -o upstream https://github.com/cms-sw/genproductions.git\n')
+        outf.write('    git clone  -o origin https://github.com/cms-sw/genproductions.git\n')
+        outf.write('    git remote add upstream git@github.com:kjaffel/genproductions.git\n')
+        outf.write('fi\n')
         outf.write('pushd genproductions\n')
         outf.write('git checkout UL2019\n')
         #outf.write('git checkout mg27x\n')
+        #outf.write('git checkout master\n')
         outf.write('git pull\n')
-        outf.write('pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/higgs/HToZATo2L2B\n')
-        outf.write('ln -s -d ../../../../../../../../PrivateProd_run2 .\n')
+        outf.write('pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/\n')
+        outf.write('mkdir HToZATo2L2B_ggfusion_b-associatedproduction/\n')
+        #outf.write('ln -s -d ../../../../../../PrivateProd_run2/ .\n')
+        outf.write('cp -a ../../../../../../PrivateProd_run2/. HToZATo2L2B_ggfusion_b-associatedproduction/\n')
         outf.write('popd\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO\n')
         outf.write('# Now for the real gridpack production\n')
+
         if 'condor' in options.queue:
             outf.write('./submit_condor_gridpack_generation.sh\n')
         #for H, A in (grid['fullsim'] + grid['ellipses_rho_1']): # TODO 
@@ -302,10 +306,11 @@ def prepare_all_MG5_cards():
             #    continue
             for tb in tb_list:
                 wH, wA, l2, l3, lR7, sinbma, tb = compute_widths_BR_and_lambdas(mH, mA, mh, tb)
+                print( l2, l3, lR7 )
                 prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb)
                 
                 name = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
-                carddir ="cards/production/13TeV/higgs/HToZATo2L2B/PrivateProd_run2/{}".format(name)
+                carddir ="cards/production/13TeV/HToZATo2L2B_ggfusion_b-associatedproduction/{}".format(name)
                 workqueue='{}'.format(options.queue)
                 scram_arch="slc7_amd64_gcc820"
                 cmssw_version="CMSSW_11_2_0_pre7"
@@ -315,6 +320,13 @@ def prepare_all_MG5_cards():
                 #outf.write( "./gridpack_generation.sh {} {} {} ALL {} {}\n".format(name, carddir, workqueue, scram_arch, cmssw_version ))
                 outf.write( "./gridpack_generation.sh {} {} {} \n".format(name, carddir, workqueue))
         
+        outf.write('# uncomment these lines if you want to commit your changes!\n')
+        outf.write('# pushd cards/production/13TeV/\n')
+        outf.write('# git checkout -b HToZATo2L2B_run2Cards\n')
+        outf.write('# git add HToZATo2L2B_ggfusion_b-associatedproduction\n')
+        outf.write('# git commit -m  'update HToZATo2L2B cards'\n')
+        outf.write('# git push upstream HToZATo2L2B_run2Cards\n')
+
         outf.write('set +x\n')
     os.chmod('prepare_all_{}_gridpacks.sh'.format(options.order.lower()), os.stat('prepare_all_{}_gridpacks.sh'.format(options.order.lower())).st_mode | stat.S_IXUSR)
     print ('All commands prepared in ./prepare_all_{}_gridpacks.sh'.format(options.order.lower()))
