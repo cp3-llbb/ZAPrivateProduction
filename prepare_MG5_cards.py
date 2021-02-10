@@ -44,7 +44,9 @@ parser.add_argument('-o', '--order', action='store',
                                       default=None, 
                                       choices=['LO', 'NLO'], 
                                       help='production shceme')
-# If you are not sure about your pdf sets , better use DEFAULT !
+parser.add_argument('--test', action='store_true', 
+                                      help='Generate 1 set of cards stored by default in  example_cards/')
+# If you are not sure about your pdf sets setting, better use DEFAULT !
 parser.add_argument('-pdf', '--lhapdfsets',   action='store', 
                                               dest='lhapdfsets', 
                                               default='DEFAULT', 
@@ -63,17 +65,21 @@ options.order= options.order.upper()
 options.scheme= options.scheme.upper()
 
 def which_points(grid):
-    grid['fullsim'] = [
-            #(MH, MA)
-            (500, 300),
-            ( 200, 50), ( 200, 100),
-            ( 250, 50), ( 250, 100),
-            ( 300, 50), ( 300, 100), ( 300, 200),
-            ( 500, 50), ( 500, 100), ( 500, 200), ( 500, 300), ( 500, 400),
-            ( 650, 50),
-            ( 800, 50), ( 800, 100), ( 800, 200),              ( 800, 400),              ( 800, 700),
-            (1000, 50),              (1000, 200),                           (1000, 500),
+    grid['example_card'] = [
+        ( 500, 300),
         ]
+    grid['fullsim'] = [
+        #(MH, MA)
+        ( 500, 300),
+        ( 200, 50), ( 200, 100),
+        ( 250, 50), ( 250, 100),
+        ( 300, 50), ( 300, 100), ( 300, 200),
+        ( 500, 50), ( 500, 100), ( 500, 200), ( 500, 300), ( 500, 400),
+        ( 650, 50),
+        ( 800, 50), ( 800, 100), ( 800, 200),              ( 800, 400),              ( 800, 700),
+        (1000, 50),              (1000, 200),                           (1000, 500),
+    ]
+    
     with open('data/points_1.000000_1.000000.json') as f:
         d = json.load(f)
         # format the output into tuples
@@ -155,7 +161,6 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     l2 = float(res.lambda_2)
     l3 = float(res.lambda_3)
     lR7 = float(res.lambda_7)
-    print( l2, l3, lR7 )
     AtoZhBR = res.AtoZhBR
     AtobbBR = res.AtobbBR
     HtoZABR = res.HtoZABR
@@ -171,11 +176,11 @@ def filename(suffix, template=False, mH=None, mA=None, tb=None):
         masses = MASSES_TEMPLATE
     else:
         masses = '{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string( tb))
-    return 'PrivateProd_run2/'+ tmp + 'HToZATo2L2B_' + masses + '_' + smpdetails +'/HToZATo2L2B_' + masses + '_' + smpdetails+ '_' + suffix +'.dat'
+    return '{}/'.format(ouputDIR) + tmp + 'HToZATo2L2B_' + masses + '_' + smpdetails +'/HToZATo2L2B_' + masses + '_' + smpdetails+ '_' + suffix +'.dat'
 
 def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
     process_name = 'HToZATo2L2B_{}_{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string( tb), smpdetails)
-    directory = 'PrivateProd_run2/'+ process_name
+    directory = '{}/'.format(ouputDIR) + process_name
     # First: create directory if it doesn't exist
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -230,7 +235,7 @@ def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
         with open(filename(suffix, mH=mH, mA=mA, tb=tb), 'w+') as outf:
             for line in inf:
                 if ('output HToZATo2L2B_' + MASSES_TEMPLATE) in line:
-                    outf.write('output HToZATo2L2B_{}_{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
+                    outf.write('output HToZATo2L2B_{}_{}_{}_{} -nojpeg'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
                 else:
                     outf.write(line)
     suffix = 'run_card'
@@ -245,37 +250,47 @@ def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
                      outf.write(line)
     suffix = 'madspin_card'
     shutil.copyfile(filename(suffix, template=True), filename(suffix, mH=mH, mA=mA, tb=tb))
-    print ('MG5 files prepared in PrivateProd_run2/HToZATo2L2B_{}_{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
+    print ('MG5 files prepared in {}/HToZATo2L2B_{}_{}_{}_{}'.format(ouputDIR, mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
     return
 
 def prepare_all_MG5_cards():
     grid = {}
     grid = which_points(grid)
-    tb_list = [0.5,1.0,1.5,2.0,5.0,6.0,8.0,10.0,15.0,20.0,30.0,40.0,50.0]
-    #tb_list =np.arange(1., 11., 1.)
+    griddata = 'example_card' if options.test else('fullsim')
+    suffix= ('example' if options.test else('all'))
+    if options.test:
+        if options.order =='LO':
+            tb_list = [1.5] 
+        else:
+            tb_list = [20.0]
+    else:
+        tb_list = [0.5,1.0,1.5,2.0,5.0,6.0,8.0,10.0,15.0,20.0,30.0,40.0,50.0]
+
     mh=125.
-    global smpdetails 
+    global smpdetails
+    global ouputDIR
+    ouputDIR = ( 'example_cards' if options.test else( 'PrivateProd_run2'))
     if options.order=='LO':
         smpdetails= 'ggH_TuneCP5_13TeV-madgraphMLM-pythia8'
     else:
         smpdetails= 'bbH4F_TuneCP5_13TeV-amcatnloFXFX-pythia8'
-    with open('prepare_all_{}_gridpacks.sh'.format(options.order.lower()), 'w+') as outf:
+    with open('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()), 'w+') as outf:
         outf.write('# Please run the following on lxplus\n')
         outf.write('# Notes:\n')
         outf.write('# - the instructions will not run on ingrid\n')
         outf.write('# - you must not have setup any cmsenv\n')
         outf.write('# - each gridpack generation should take about 5 minutes\n')
         outf.write('set -x\n')
-        outf.write('DIR= ZAPrivateProduction\n')
-        outf.write('if [[ ! -d "$DIR" ]]; then\n')
+        outf.write('ZADIR= ZAPrivateProduction\n')
+        outf.write('if [[ ! -d "$ZADIR" ]]; then\n')
         outf.write('    git clone -o upstream git@github.com:cp3-llbb/ZAPrivateProduction.git\n')
         outf.write('    git remote add origin git@github.com:kjaffel/ZAPrivateProduction.git\n')
         outf.write('fi\n')
         outf.write('pushd ZAPrivateProduction\n')
         outf.write('git fetch origin\n')
         outf.write('git checkout origin/master\n')
-        outf.write('DIR= genproductions\n')
-        outf.write('if [[ ! -d "$DIR" ]]; then\n')
+        outf.write('GenDIR= genproductions\n')
+        outf.write('if [[ ! -d "$GenDIR" ]]; then\n')
         outf.write('    git clone  -o origin https://github.com/cms-sw/genproductions.git\n')
         outf.write('    git remote add upstream git@github.com:kjaffel/genproductions.git\n')
         outf.write('fi\n')
@@ -285,17 +300,24 @@ def prepare_all_MG5_cards():
         #outf.write('git checkout master\n')
         outf.write('git pull\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/\n')
-        outf.write('mkdir HToZATo2L2B_ggfusion_b-associatedproduction/\n')
-        #outf.write('ln -s -d ../../../../../../PrivateProd_run2/ .\n')
-        outf.write('cp -a ../../../../../../PrivateProd_run2/. HToZATo2L2B_ggfusion_b-associatedproduction/\n')
+        outf.write('CardsDIR= HToZATo2L2B_ggfusion_b-associatedproduction\n')
+        outf.write('if [[ ! -d "$CardsDIR" ]]; then\n')
+        outf.write('    mkdir HToZATo2L2B_ggfusion_b-associatedproduction/\n')
+        outf.write('fi\n')
+        #outf.write('ln -s -d ../../../../../../{}/ .\n'.format(ouputDIR))
+        outf.write('cp -a ../../../../../../{}/. HToZATo2L2B_ggfusion_b-associatedproduction/\n'.format(ouputDIR))
         outf.write('popd\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO\n')
-        outf.write('# Now for the real gridpack production\n')
 
         if 'condor' in options.queue:
             outf.write('./submit_condor_gridpack_generation.sh\n')
+        else:
+            outf.write('# kEEP IN MIND : IF You are submitting from lxplus and the local directory is not on AFS \n')
+            outf.write('# Automatically will switch to condor spool mode.\n')
+            outf.write('# So you have to call : ./submit_condor_gridpack_generation.sh \n')
+        outf.write('# Now for the real gridpack production\n')
         #for H, A in (grid['fullsim'] + grid['ellipses_rho_1']): # TODO 
-        for H, A in (grid['fullsim']):
+        for H, A in (grid[griddata]):
             mH = float_to_mass(H)
             mA = float_to_mass(A)
             #FIXME : I DON'T SEE A RASON FOR SKIPPING THESE POINTS
@@ -306,7 +328,6 @@ def prepare_all_MG5_cards():
             #    continue
             for tb in tb_list:
                 wH, wA, l2, l3, lR7, sinbma, tb = compute_widths_BR_and_lambdas(mH, mA, mh, tb)
-                print( l2, l3, lR7 )
                 prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb)
                 
                 name = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
@@ -324,12 +345,12 @@ def prepare_all_MG5_cards():
         outf.write('# pushd cards/production/13TeV/\n')
         outf.write('# git checkout -b HToZATo2L2B_run2Cards\n')
         outf.write('# git add HToZATo2L2B_ggfusion_b-associatedproduction\n')
-        outf.write('# git commit -m  'update HToZATo2L2B cards'\n')
+        outf.write("# git commit -m  'update HToZATo2L2B cards'\n")
         outf.write('# git push upstream HToZATo2L2B_run2Cards\n')
 
         outf.write('set +x\n')
-    os.chmod('prepare_all_{}_gridpacks.sh'.format(options.order.lower()), os.stat('prepare_all_{}_gridpacks.sh'.format(options.order.lower())).st_mode | stat.S_IXUSR)
-    print ('All commands prepared in ./prepare_all_{}_gridpacks.sh'.format(options.order.lower()))
+    os.chmod('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()), os.stat('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower())).st_mode | stat.S_IXUSR)
+    print ('All commands prepared in ./prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()))
 
 if __name__ == '__main__':
     prepare_all_MG5_cards()
