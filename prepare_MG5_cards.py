@@ -298,12 +298,15 @@ def prepare_all_MG5_cards():
         outf.write('git checkout master\n')
         outf.write('git pull\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/\n')
-        outf.write("CardsDIR= 'HToZATo2L2B_ggfusion_b-associatedproduction'\n")
-        outf.write('if [[ ! -d "$CardsDIR" ]]; then\n')
-        outf.write('    mkdir HToZATo2L2B_ggfusion_b-associatedproduction/\n')
-        outf.write('fi\n')
-        #outf.write('ln -s -d ../../../../../../{}/ .\n'.format(ouputDIR))
-        outf.write('cp -a ../../../../../../{}/. HToZATo2L2B_ggfusion_b-associatedproduction/\n'.format(ouputDIR))
+        # Copy only the example cards for review  !
+        if options.test:
+            outf.write("CardsDIR= 'HToZATo2L2B_ggfusion_b-associatedproduction'\n")
+            outf.write('if [[ ! -d "$CardsDIR" ]]; then\n')
+            outf.write('    mkdir HToZATo2L2B_ggfusion_b-associatedproduction/\n')
+            outf.write('fi\n')
+            outf.write('cp -a ../../../../../../{}/. HToZATo2L2B_ggfusion_b-associatedproduction/\n'.format(ouputDIR))
+        else:
+            outf.write('ln -s -d ../../../../../../PrivateProd_run2/ .\n')
         outf.write('popd\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO\n')
 
@@ -329,7 +332,7 @@ def prepare_all_MG5_cards():
                 prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb)
                 
                 name = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
-                carddir ="cards/production/13TeV/HToZATo2L2B_ggfusion_b-associatedproduction/{}".format(name)
+                carddir ="cards/production/13TeV/{}/{}".format(ouputDIR, name)
                 workqueue='{}'.format(options.queue)
                 scram_arch="slc7_amd64_gcc820"
                 cmssw_version="CMSSW_11_2_0_pre7"
@@ -339,7 +342,7 @@ def prepare_all_MG5_cards():
                 #outf.write( "./gridpack_generation.sh {} {} {} ALL {} {}\n".format(name, carddir, workqueue, scram_arch, cmssw_version ))
                 outf.write( "./gridpack_generation.sh {} {} {} \n".format(name, carddir, workqueue))
         
-        outf.write('# uncomment these lines if you want to commit your changes!\n')
+        outf.write('# uncomment these lines to Add more commits by pushing to the HToZATo2L2B_run2Cards branch on kjaffel/genproductions.!\n')
         outf.write('# pushd cards/production/13TeV/\n')
         outf.write('# git checkout -b HToZATo2L2B_run2Cards\n')
         outf.write('# git add HToZATo2L2B_ggfusion_b-associatedproduction\n')
