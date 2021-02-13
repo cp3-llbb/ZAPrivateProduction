@@ -35,13 +35,13 @@ parser.add_argument('-q', '--queue', action='store',
                                     default='1nh',
                                     choices=['condor', 'condor_spool', '1nh'],
                                     type=str,
-                                    help='')
+                                    help='more options : [pbs|sge|condor|lsf|ge|slurm|htcaas|htcaas2] Use for cluster run only')
 parser.add_argument('-s', '--scheme', action='store', 
-                                      default='none', 
-                                      choices=['NONE', '4FS', '5FS'], 
+                                      default='', 
+                                      choices=['', '4FS', '5FS'], 
                                       help='production shceme')
 parser.add_argument('-o', '--order', action='store', 
-                                      default=None, 
+                                      default='NLO', 
                                       choices=['LO', 'NLO'], 
                                       help='production shceme')
 parser.add_argument('--test', action='store_true', 
@@ -57,9 +57,8 @@ parser.add_argument('-pdf', '--lhapdfsets',   action='store',
                                                     ''')
 parser.add_argument('-lhaid', '--lhaid', action='store',
                                          dest='lhaid',
-                                         default=None,
                                          type=int,
-                                         help = '')
+                                         help = 'LHAPDF ID(ver 6.3.0) : Full list here : https://lhapdf.hepforge.org/pdfsets')
 options = parser.parse_args()
 options.order= options.order.upper()
 options.scheme= options.scheme.upper()
@@ -205,7 +204,7 @@ def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
                     outf.write('{} mass 36 {:.2f}\n'.format(template_line, mA))
                 
                 elif template_line in line and 'width 36' in line:
-                    outf.write('{} width 36 {:.6f}\n'.format(template_line, wA))
+                    outf.write('{} width 36 Auto\n'.format(template_line))
                 elif template_line in line and 'width 35' in line:
                     outf.write('{} width 35 {:.6f}\n'.format(template_line, wH))
                 
@@ -271,17 +270,16 @@ def prepare_all_MG5_cards():
     global ouputDIR
     ouputDIR = ( 'example_cards' if options.test else( 'PrivateProd_run2'))
     if options.order=='LO':
-        smpdetails= 'ggH_TuneCP5_13TeV-madgraphMLM-pythia8'
+        smpdetails= 'ggH_TuneCP5_13TeV_pythia8'
     else:
-        smpdetails= 'bbH4F_TuneCP5_13TeV-amcatnloFXFX-pythia8'
+        smpdetails= 'bbH4F_TuneCP5_13TeV-amcatnlo_pythia8'
     with open('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()), 'w+') as outf:
         outf.write('# Please run the following on lxplus\n')
         outf.write('# Notes:\n')
-        outf.write('# - the instructions will not run on ingrid\n')
         outf.write('# - you must not have setup any cmsenv\n')
-        outf.write('# - each gridpack generation should take about 5 minutes\n')
+        outf.write('# - each gridpack generation should take about 20 minutes\n')
         outf.write('set -x\n')
-        outf.write('ZADIR= ZAPrivateProduction\n')
+        outf.write("ZADIR= 'ZAPrivateProduction'\n")
         outf.write('if [[ ! -d "$ZADIR" ]]; then\n')
         outf.write('    git clone -o upstream git@github.com:cp3-llbb/ZAPrivateProduction.git\n')
         outf.write('    git remote add origin git@github.com:kjaffel/ZAPrivateProduction.git\n')
@@ -289,18 +287,18 @@ def prepare_all_MG5_cards():
         outf.write('pushd ZAPrivateProduction\n')
         outf.write('git fetch origin\n')
         outf.write('git checkout origin/master\n')
-        outf.write('GenDIR= genproductions\n')
+        outf.write("GenDIR= 'genproductions'\n")
         outf.write('if [[ ! -d "$GenDIR" ]]; then\n')
         outf.write('    git clone  -o origin https://github.com/cms-sw/genproductions.git\n')
         outf.write('    git remote add upstream git@github.com:kjaffel/genproductions.git\n')
         outf.write('fi\n')
         outf.write('pushd genproductions\n')
-        outf.write('git checkout UL2019\n')
+        #outf.write('git checkout UL2019\n')
         #outf.write('git checkout mg27x\n')
-        #outf.write('git checkout master\n')
+        outf.write('git checkout master\n')
         outf.write('git pull\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/\n')
-        outf.write('CardsDIR= HToZATo2L2B_ggfusion_b-associatedproduction\n')
+        outf.write("CardsDIR= 'HToZATo2L2B_ggfusion_b-associatedproduction'\n")
         outf.write('if [[ ! -d "$CardsDIR" ]]; then\n')
         outf.write('    mkdir HToZATo2L2B_ggfusion_b-associatedproduction/\n')
         outf.write('fi\n')
