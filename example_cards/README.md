@@ -26,23 +26,21 @@ git checkout HToZATo2L2B_run2Cards
 git pull
 
 ./prepare_MG5_cards.py --order --test
-The script will look for example_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnloFXFX-pythia8 if --order NLO
-                     and example_cards/template_HToZATo2L2B_200_50_1_ggH_TuneCP5_13TeV-amcatnloFXFX-pythia8   if --order LO
-    in order to be able to produce the needed .dat cards for the requested signal mass points and tb values
+
+#The script will look for example_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnloFXFX-pythia8 if --order NLO
+#                     and example_cards/template_HToZATo2L2B_200_50_1_ggH_TuneCP5_13TeV-amcatnloFXFX-pythia8   if --order LO
+#    in order to be able to produce the needed .dat cards for the requested signal mass points and tb values
 ```
 ```
---order : LO or NLO computation
-    LO   ggfusion - loop induced
-    NLO  b-associated production
---test : will produce 1 set of cards for each process, saved by default in example_cards/
-                and 2 bash scripts prepare_example_{order}_gridpacks.sh to genrate the gridpacks
-    LO   tb= 1.5 , MH= 500, MA=300
-    NLO  tb= 20. , MH=500, MA=300
--- lhaid : will be set to $DEFAULT_PDF_SETS as shortcuts to have the PDF sets automatically and added to the run_card at run time to avoid specifying them directly
+-o : --order  `LO` ggfusion - loop induce or `NLO`  b-associated production
+-q : --queue : 1nh
+
+--test   :  will produce 1 set of cards for each process, saved by default in example_cards/ 
+                        and 2 bash scripts `prepare_example_{order}_gridpacks.sh` to genrate the gridpacks
+-- lhaid :  will be set to `$DEFAULT_PDF_SETS` as shortcuts to have the PDF sets automatically and added to the run_card at run time to avoid specifying them directly
     lhapdf = pdlabel ! PDF set
     $DEFAULT_PDF_SETS = lhaid
     $DEFAULT_PDF_MEMBERS  = reweight_PDF
---queue : 1nh
 ```
    # Generate gridpacks:
 ```bash
