@@ -27,10 +27,9 @@ git pull
 
 ./prepare_MG5_cards.py --order --test
 
-#The script will look for example_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnloFXFX-pythia8 if --order NLO
-#                     and example_cards/template_HToZATo2L2B_200_50_1_ggH_TuneCP5_13TeV-amcatnloFXFX-pythia8   if --order LO
-#    in order to be able to produce the needed .dat cards for the requested signal mass points and tb values
 ```
+- The script will look for;
+`example_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8` if `--order NLO` and `example_cards/template_HToZATo2L2B_200_50_1_ggH_TuneCP5_13TeV_pythia8` if `--order LO ` in order to be able to produce the needed .dat cards for the requested signal mass points and tb values.
 ```
 -o : --order  `LO` ggfusion - loop induce or `NLO`  b-associated production
 -q : --queue : 1nh
