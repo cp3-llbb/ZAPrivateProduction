@@ -90,8 +90,6 @@
            ! first are included via reweighting
   91.118  = mur_ref_fixed    ! fixed ren reference scale
   91.118  = muf_ref_fixed ! fixed fact reference scale
-  1.0   = mur_over_ref ! ratio of current muR over reference muR
-  1.0   = muf_over_ref ! ratio of current muF over reference muF 
 #*********************************************************************** 
 # Reweight variables for scale dependence and PDF uncertainty          *
 #***********************************************************************
@@ -108,8 +106,6 @@
   -1.0	= rw_rscale_down  ! upper bound for fact scale variations
   -1.0	= rw_fscale_up   ! upper bound for fact scale variations
   -1.0	= rw_rscale_up   ! upper bound for ren scale variations
-  325501   = PDF_set_min      ! First of the error PDF sets 
-  325600   = PDF_set_max      ! Last of the error PDF sets
 #************************************************************************
 ## Renormalization and factorization scales (advanced and NLO options)  *
 ##***********************************************************************
@@ -186,11 +182,16 @@
   0	= iappl ! aMCfast switch (0=OFF, 1=prepare grids, 2=fill grids)
 #***********************************************************************
 ## Maximal PDG code for quark to be considered a jet when applying cuts.*
-### At least all massless quarks of the model should be included here.  *
+## At least all massless quarks of the model should be included here.   *
+#*********************************************************************
   4	= maxjetflavor 
 #********************************************************************* 
-#  Additional hidden parameters
-# Choose the argment to pass to the systematics command. like --mur=0.25,1,4. Look at the help of the systematics function for more details.
+# Store info for systematics studies                                 *
+# WARNING: Do not use for interference type of computation           *
+# Syscalc is deprecated but to see the associate options type'update syscalc'
+#! see: https://cp3.irmp.ucl.ac.be/projects/madgraph/wiki/Systematics#Systematicspythonmodule
 #*********************************************************************
-  #systematics	= systematics_program # Choose which program to use for systematics computation: none, systematics
-  #['--mur=0.5,1,2', '--muf=0.5,1,2', '--together=mur,muf,dyn', '--pdf=errorset']	= systematics_arguments 
+# True  = use_syst ! Enable systematics studies
+# systematics   = systematics_program ! none, systematics [python], SysCalc [depreceted, C++]
+# ['--mur=0.5,1,2', '--muf=0.5,1,2', '--pdf=errorset', '--alps=0.5,1,2'] = systematics_arguments 
+#*********************************************************************

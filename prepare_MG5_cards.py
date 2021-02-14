@@ -133,7 +133,7 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     if options.lhapdfsets == 'DEFAULT':
         logger.warning( 'The following ** $DEFAULT_PDF_SETS ** is shortcuts to have the PDF sets automatically added to the run_card at run time to avoid specifying them directly\n. Be careful this is valid at both LO and NLO !\n')
         lhaid = '$DEFAULT_PDF_SETS'
-    elif options.lhapdfsets is 'NNPDF31': 
+    elif options.lhapdfsets == 'NNPDF31': 
         if options.scheme == '4FS':
             logger.info( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite 4Flavor-scheme set will be used instead\n 
                             LHA Name = NNPDF31_nnlo_as_0118_nf_4_mc_hessian\n 

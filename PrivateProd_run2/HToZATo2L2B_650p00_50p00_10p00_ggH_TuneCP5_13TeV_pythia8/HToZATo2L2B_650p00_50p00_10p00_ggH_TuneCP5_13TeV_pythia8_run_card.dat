@@ -40,7 +40,7 @@
 # PDF CHOICE: this automatically fixes also alpha_s and its evol.    *
 #*********************************************************************
   lhapdf	= pdlabel ! PDF set                                     
-None = lhaid ! if pdlabel=lhapdf, this is the lhapdf number
+325300 = lhaid ! if pdlabel=lhapdf, this is the lhapdf number
 #*********************************************************************
 # To see heavy ion options: type "update ion_pdf"
 #*********************************************************************
@@ -49,8 +49,6 @@ None = lhaid ! if pdlabel=lhapdf, this is the lhapdf number
   False	= fixed_ren_scale ! if .true. use fixed ren scale
   False	= fixed_fac_scale ! if .true. use fixed fac scale
   91.188	= scale ! fixed ren scale
-  91.188	= dsqrt_q2fact1 ! fixed fact scale for pdf1
-  91.188	= dsqrt_q2fact2 ! fixed fact scale for pdf2
   -1	= dynamical_scale_choice ! Choose one of the preselected dynamical choices
   1.0	= scalefact ! scale factor for event-by-event scales
 #*********************************************************************
