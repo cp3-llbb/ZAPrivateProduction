@@ -304,7 +304,7 @@ def prepare_all_MG5_cards():
             outf.write('if [[ ! -d "$CardsDIR" ]]; then\n')
             outf.write('    mkdir HToZATo2L2B_ggfusion_b-associatedproduction/\n')
             outf.write('fi\n')
-            outf.write('cp -a ../../../../../../{}/. HToZATo2L2B_ggfusion_b-associatedproduction/\n'.format(ouputDIR))
+            outf.write('cp -r ../../../../../../example_cards HToZATo2L2B_ggfusion_b-associatedproduction/.\n')
         else:
             outf.write('ln -s -d ../../../../../../PrivateProd_run2/ .\n')
         outf.write('popd\n')
@@ -332,7 +332,8 @@ def prepare_all_MG5_cards():
                 prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb)
                 
                 name = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
-                carddir ="cards/production/13TeV/{}/{}".format(ouputDIR, name)
+                loc = ('HToZATo2L2B_ggfusion_b-associatedproduction/example_cards' if options.test else ('PrivateProd_run2') )
+                carddir ="cards/production/13TeV/{}/{}".format(loc, name)
                 workqueue='{}'.format(options.queue)
                 scram_arch="slc7_amd64_gcc820"
                 cmssw_version="CMSSW_11_2_0_pre7"

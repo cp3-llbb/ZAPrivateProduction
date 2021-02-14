@@ -20,10 +20,6 @@ pushd genproductions
 git checkout master
 git pull
 pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/
-CardsDIR= 'HToZATo2L2B_ggfusion_b-associatedproduction'
-if [[ ! -d "$CardsDIR" ]]; then
-    mkdir HToZATo2L2B_ggfusion_b-associatedproduction/
-fi
 ln -s -d ../../../../../../PrivateProd_run2/ .
 popd
 pushd bin/MadGraph5_aMCatNLO

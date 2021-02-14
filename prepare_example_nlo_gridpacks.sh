@@ -24,13 +24,15 @@ CardsDIR= 'HToZATo2L2B_ggfusion_b-associatedproduction'
 if [[ ! -d "$CardsDIR" ]]; then
     mkdir HToZATo2L2B_ggfusion_b-associatedproduction/
 fi
-cp -a ../../../../../../example_cards/. HToZATo2L2B_ggfusion_b-associatedproduction/
+cp -r ../../../../../../example_cards HToZATo2L2B_ggfusion_b-associatedproduction/.
 popd
 pushd bin/MadGraph5_aMCatNLO
-./submit_condor_gridpack_generation.sh
+# kEEP IN MIND : IF You are submitting from lxplus and the local directory is not on AFS 
+# Automatically will switch to condor spool mode.
+# So you have to call : ./submit_condor_gridpack_generation.sh 
 # Now for the real gridpack production
-./gridpack_generation.sh HToZATo2L2B_500p00_300p00_20p00_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8 cards/production/13TeV/HToZATo2L2B_ggfusion_b-associatedproduction/HToZATo2L2B_500p00_300p00_20p00_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8 condor_spool 
-# uncomment these lines if you want to commit your changes!
+./gridpack_generation.sh HToZATo2L2B_500p00_300p00_20p00_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8 cards/production/13TeV/HToZATo2L2B_ggfusion_b-associatedproduction/example_cards/HToZATo2L2B_500p00_300p00_20p00_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8 1nh 
+# uncomment these lines to Add more commits by pushing to the HToZATo2L2B_run2Cards branch on kjaffel/genproductions.!
 # pushd cards/production/13TeV/
 # git checkout -b HToZATo2L2B_run2Cards
 # git add HToZATo2L2B_ggfusion_b-associatedproduction
