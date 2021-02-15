@@ -153,6 +153,8 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     else:
         res.setpdf(options.lhapdfsets )
         lhaid = options.lhaid
+        if lhaid is None:
+            logger.error( "CRITICAL: lhaid can't be NONE ")
     
     res.computeBR()
     wH = float(res.Hwidth)
