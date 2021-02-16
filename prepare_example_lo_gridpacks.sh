@@ -27,11 +27,9 @@ fi
 cp -r ../../../../../../example_cards HToZATo2L2B_ggfusion_b-associatedproduction/.
 popd
 pushd bin/MadGraph5_aMCatNLO
-# kEEP IN MIND : IF You are submitting from lxplus and the local directory is not on AFS 
-# Automatically will switch to condor spool mode.
-# So you have to call : ./submit_condor_gridpack_generation.sh 
+./submit_condor_gridpack_generation.sh
 # Now for the real gridpack production
-./gridpack_generation.sh HToZATo2L2B_500p00_300p00_1p50_ggH_TuneCP5_13TeV_pythia8 cards/production/13TeV/HToZATo2L2B_ggfusion_b-associatedproduction/example_cards/HToZATo2L2B_500p00_300p00_1p50_ggH_TuneCP5_13TeV_pythia8 1nh 
+./gridpack_generation.sh HToZATo2L2B_500p00_300p00_1p50_ggH_TuneCP5_13TeV_pythia8 cards/production/13TeV/HToZATo2L2B_ggfusion_b-associatedproduction/example_cards/HToZATo2L2B_500p00_300p00_1p50_ggH_TuneCP5_13TeV_pythia8 condor_spool 
 # uncomment these lines to Add more commits by pushing to the HToZATo2L2B_run2Cards branch on kjaffel/genproductions.!
 # pushd cards/production/13TeV/
 # git checkout -b HToZATo2L2B_run2Cards
