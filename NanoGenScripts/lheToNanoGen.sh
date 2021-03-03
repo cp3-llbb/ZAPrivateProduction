@@ -18,7 +18,6 @@ cp "$lheInput" "cmsgrid_final.lhe"
 
 cmsDriver.py "${fragment}" --filein "file:${lheInput}" --fileout "file:${output}" --mc --eventcontent NANOAODSIM --datatier NANOAOD  --conditions auto:mc --step GEN,NANOGEN -n "${nEvents}" --customise_commands 'process.nanoAOD_step.remove(process.rivetProducerHTXS); process.nanoAOD_step.remove(process.HTXSCategoryTable)'; "process.externalLHEProducer.scriptName = cms.FileInPath('Configuration/NanoGenScripts/data/ignore.sh')"
 
-#cmsDriver.py "${fragment}" --fileout "file:${output}" --mc --eventcontent NANOAODSIM --datatier NANOAOD --conditions auto:mc --step LHE,GEN,NANOGEN -n "${nEvents}" --customise_commands 'process.nanoAOD_step.remove(process.rivetProducerHTXS); process.nanoAOD_step.remove(process.HTXSCategoryTable)'; "process.externalLHEProducer.scriptName = cms.FileInPath('Configuration/NanoGenScripts/data/ignore.sh')"
 popd
 if [ -d "${tmpdir}" ]; then
   rm -rf "${tmpdir}"
