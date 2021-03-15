@@ -10,5 +10,5 @@ set param_card mass 25 125.0     # h1: h
 set param_card mass 36 50.0      # h3: A
 set param_card mass 35 200.0     # h2: H
 # Settings for the scalar widths 
-set param_card width 36 0.00323503787
+set param_card width 36 Auto
 set param_card width 35 0.96446288

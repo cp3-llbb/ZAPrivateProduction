@@ -69,9 +69,8 @@ def which_points(grid):
         ]
     grid['fullsim'] = [
         #(MH, MA)
-        ( 500, 300),
         ( 200, 50), ( 200, 100),
-        ( 250, 50), ( 250, 100),
+        (250, 50), ( 250, 100),
         ( 300, 50), ( 300, 100), ( 300, 200),
         ( 500, 50), ( 500, 100), ( 500, 200), ( 500, 300), ( 500, 400),
         ( 650, 50),
@@ -166,8 +165,9 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     AtobbBR = res.AtobbBR
     HtoZABR = res.HtoZABR
     HtobbBR = res.HtobbBR
+    xsec_ggH, err_integration_ggH, err_muRm_ggH, err_muRp_ggH, xsec_bbH, err_integration_bbH =  res.getXsecFromSusHi()
     os.chdir(cwd)
-    return wH, wA, l2, l3, lR7, sinbma, tb #, AtoZhBR, AtobbBR, HtoZABR, HtobbBR
+    return wH, wA, l2, l3, lR7, sinbma, tb , xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH #, AtoZhBR, AtobbBR, HtoZABR, HtobbBR
 
 def filename(suffix, template=False, mH=None, mA=None, tb=None):
     tmp = ''
@@ -206,7 +206,7 @@ def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
                     outf.write('{} mass 36 {:.2f}\n'.format(template_line, mA))
                 
                 elif template_line in line and 'width 36' in line:
-                    outf.write('{} width 36 Auto\n'.format(template_line))
+                    outf.write('{} width 36 {:.6f}\n'.format(template_line, wA))
                 elif template_line in line and 'width 35' in line:
                     outf.write('{} width 35 {:.6f}\n'.format(template_line, wH))
                 
@@ -257,19 +257,15 @@ def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
 def prepare_all_MG5_cards():
     grid = {}
     grid = which_points(grid)
-    griddata = 'example_card' if options.test else('fullsim')
+    griddata = (grid['example_card'] if options.test else(grid['fullsim'] + grid['ellipses_rho_1']))
     suffix= ('example' if options.test else('all'))
-    if options.test:
-        if options.order =='LO':
-            tb_list = [1.5] 
-        else:
-            tb_list = [20.0]
-    else:
-        tb_list = [0.5,1.0,1.5,2.0,5.0,6.0,8.0,10.0,15.0,20.0,30.0,40.0,50.0]
+    tb_list = ([1.5] if options.order =='LO' else([20.0]))
+    #tb_list = [0.5,1.0,1.5,2.0,5.0,6.0,8.0,10.0,15.0,20.0,30.0,40.0,50.0]
 
     mh=125.
     global smpdetails
     global ouputDIR
+    
     ouputDIR = ( 'example_cards' if options.test else( 'PrivateProd_run2'))
     if options.order=='LO':
         smpdetails= 'ggH_TuneCP5_13TeV_pythia8'
@@ -319,8 +315,13 @@ def prepare_all_MG5_cards():
             outf.write('# Automatically will switch to condor spool mode.\n')
             outf.write('# So you have to call : ./submit_condor_gridpack_generation.sh \n')
         outf.write('# Now for the real gridpack production\n')
-        #for H, A in (grid['fullsim'] + grid['ellipses_rho_1']): # TODO 
-        for H, A in (grid[griddata]):
+        
+        datasetName_xsc_file =os.path.join("data/","list_{}_{}_datasetnames.txt".format(suffix, options.order.lower()))
+        if os.path.exists(datasetName_xsc_file):
+            os.remove(datasetName_xsc_file)
+        f= open(datasetName_xsc_file,"a")
+        f.write('DatasetName Sushi_xsc[pb] Sushi_xsc_err[pb]\n')
+        for H, A in griddata:
             mH = float_to_mass(H)
             mA = float_to_mass(A)
             #FIXME : I DON'T SEE A RASON FOR SKIPPING THESE POINTS
@@ -330,10 +331,13 @@ def prepare_all_MG5_cards():
             #    outf.write(s + '\n')
             #    continue
             for tb in tb_list:
-                wH, wA, l2, l3, lR7, sinbma, tb = compute_widths_BR_and_lambdas(mH, mA, mh, tb)
+                wH, wA, l2, l3, lR7, sinbma, tb, xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH = compute_widths_BR_and_lambdas(mH, mA, mh, tb)
                 prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb)
                 
                 name = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
+                xsc = (xsec_ggH if options.order=='LO' else(xsec_bbH))
+                err = (err_integration_ggH if options.order=='LO' else( err_integration_bbH))
+                f.write('{} {} {}\n'.format(name, xsc ,err))
                 loc = ('HToZATo2L2B_ggfusion_b-associatedproduction/example_cards' if options.test else ('PrivateProd_run2') )
                 carddir ="cards/production/13TeV/{}/{}".format(loc, name)
                 workqueue='{}'.format(options.queue)
@@ -353,6 +357,7 @@ def prepare_all_MG5_cards():
         outf.write('# git push upstream HToZATo2L2B_run2Cards\n')
 
         outf.write('set +x\n')
+        f.close()
     os.chmod('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()), os.stat('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower())).st_mode | stat.S_IXUSR)
     print ('All commands prepared in ./prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()))
 
