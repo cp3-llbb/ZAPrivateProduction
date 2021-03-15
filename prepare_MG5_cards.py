@@ -101,8 +101,12 @@ def float_to_mass(m):
 def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     global options
     global lhaid
-
-    mode = 'H'
+    
+    xsec_ggH = 0.
+    xsec_bbH = 0.
+    err_integration_ggH = 0.
+    err_integration_bbH = 0.
+    
     if mA > mH:
         logger.info("MA_{} > MH_{} switching to A->ZH mode!".format(mA, mH))
         mode = 'A'
@@ -112,6 +116,7 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     elif mH >= mA and mH <= 125.:
         logger.info("MA_{} >= MH_{} && H <= 125. GeV switching to h->ZH mode!".format(mA, mH))
         mode ='h'
+    
     sqrts = 13000
     type = 2
     mh = mh
@@ -125,6 +130,7 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     cwd = os.getcwd()
     #os.chdir(os.path.join(CMSSW_Calculators42HDM, 'out'))
     os.chdir(CMSSW_Calculators42HDM)
+    
     res = Calc2HDM(mode = mode, sqrts = sqrts, type = type,
                    tb = tb, m12 = m12, mh = mh, mH = mH, mA = mA, mhc = mhc, sba = sinbma,
                    outputFile = outputFile, muR = 1., muF = 1.)
@@ -165,7 +171,10 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     AtobbBR = res.AtobbBR
     HtoZABR = res.HtoZABR
     HtobbBR = res.HtobbBR
-    xsec_ggH, err_integration_ggH, err_muRm_ggH, err_muRp_ggH, xsec_bbH, err_integration_bbH =  res.getXsecFromSusHi()
+    
+    if save_crosssectionsInfo:
+        xsec_ggH, err_integration_ggH, err_muRm_ggH, err_muRp_ggH, xsec_bbH, err_integration_bbH =  res.getXsecFromSusHi()
+    
     os.chdir(cwd)
     return wH, wA, l2, l3, lR7, sinbma, tb , xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH #, AtoZhBR, AtobbBR, HtoZABR, HtobbBR
 
@@ -263,9 +272,12 @@ def prepare_all_MG5_cards():
     #tb_list = [0.5,1.0,1.5,2.0,5.0,6.0,8.0,10.0,15.0,20.0,30.0,40.0,50.0]
 
     mh=125.
+    save_crosssectionsInfo = False
+    
     global smpdetails
     global ouputDIR
-    
+    global save_crosssectionsInfo
+
     ouputDIR = ( 'example_cards' if options.test else( 'PrivateProd_run2'))
     if options.order=='LO':
         smpdetails= 'ggH_TuneCP5_13TeV_pythia8'
@@ -317,10 +329,12 @@ def prepare_all_MG5_cards():
         outf.write('# Now for the real gridpack production\n')
         
         datasetName_xsc_file =os.path.join("data/","list_{}_{}_datasetnames.txt".format(suffix, options.order.lower()))
-        if os.path.exists(datasetName_xsc_file):
-            os.remove(datasetName_xsc_file)
-        f= open(datasetName_xsc_file,"a")
-        f.write('DatasetName Sushi_xsc[pb] Sushi_xsc_err[pb]\n')
+        if save_crosssectionsInfo:
+            if os.path.exists(datasetName_xsc_file):
+                os.remove(datasetName_xsc_file)
+            f= open(datasetName_xsc_file,"a")
+            f.write('DatasetName Sushi_xsc[pb] Sushi_xsc_err[pb]\n')
+        
         for H, A in griddata:
             mH = float_to_mass(H)
             mA = float_to_mass(A)
@@ -335,9 +349,10 @@ def prepare_all_MG5_cards():
                 prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb)
                 
                 name = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
-                xsc = (xsec_ggH if options.order=='LO' else(xsec_bbH))
-                err = (err_integration_ggH if options.order=='LO' else( err_integration_bbH))
-                f.write('{} {} {}\n'.format(name, xsc ,err))
+                if save_crosssectionsInfo:
+                    xsc = (xsec_ggH if options.order=='LO' else(xsec_bbH))
+                    err = (err_integration_ggH if options.order=='LO' else( err_integration_bbH))
+                    f.write('{} {} {}\n'.format(name, xsc ,err))
                 loc = ('HToZATo2L2B_ggfusion_b-associatedproduction/example_cards' if options.test else ('PrivateProd_run2') )
                 carddir ="cards/production/13TeV/{}/{}".format(loc, name)
                 workqueue='{}'.format(options.queue)
@@ -357,7 +372,10 @@ def prepare_all_MG5_cards():
         outf.write('# git push upstream HToZATo2L2B_run2Cards\n')
 
         outf.write('set +x\n')
-        f.close()
+        
+        if save_crosssectionsInfo:
+            f.close()
+    
     os.chmod('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()), os.stat('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower())).st_mode | stat.S_IXUSR)
     print ('All commands prepared in ./prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()))
 
