@@ -23,9 +23,6 @@ pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/
 ln -s -d ../../../../../../PrivateProd_run2/ .
 popd
 pushd bin/MadGraph5_aMCatNLO
-# kEEP IN MIND : IF You are submitting from lxplus and the local directory is not on AFS 
-# Automatically will switch to condor_spool mode.
-# So you have to call : ./submit_condor_gridpack_generation.sh
 ./submit_condor_gridpack_generation.sh
 # Now for the real gridpack production
 ./gridpack_generation.sh HToZATo2L2B_200p00_50p00_1p50_ggH_TuneCP5_13TeV_pythia8 cards/production/13TeV/PrivateProd_run2/HToZATo2L2B_200p00_50p00_1p50_ggH_TuneCP5_13TeV_pythia8 condor_spool 
