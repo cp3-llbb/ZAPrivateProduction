@@ -12,82 +12,48 @@ from cp3_llbb.Calculators42HDM.Calc2HDM import *
 
 import logging
 LOG_LEVEL = logging.DEBUG
-LOGFORMAT = "  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s"
-import colorlog
-from colorlog import ColoredFormatter
-logging.root.setLevel(LOG_LEVEL)
-formatter = ColoredFormatter(LOGFORMAT)
 stream = logging.StreamHandler()
 stream.setLevel(LOG_LEVEL)
-stream.setFormatter(formatter)
 logger = logging.getLogger("ZA GridPack-PRODUCTION")
 logger.setLevel(LOG_LEVEL)
 logger.addHandler(stream)
+try:
+    import colorlog
+    from colorlog import ColoredFormatter
+    LOGFORMAT = "  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s"
+    formatter = ColoredFormatter(LOGFORMAT)
+    stream.setFormatter(formatter)
+except ImportError:
+    pass
 
-CMSSW_Calculators42HDM = '/home/ucl/cp3/kjaffel/ZAPrivateProduction/CMSSW_10_2_22/src/cp3_llbb/Calculators42HDM'
-MASSES_TEMPLATE='200_50_1'
+if "CMSSW_BASE" not in os.environ:
+    raise RuntimeError("This script needs to be run in a CMSSW environment, with cp3_llbb/Calculators42HDM set up")
+CMSSW_Calculators42HDM = os.path.join(os.environ["CMSSW_BASE"], "src", "cp3_llbb", "Calculators42HDM")
 
-parser = argparse.ArgumentParser(description='Preparing Grid Pack for 2HDM H/A-> Z(->ll) A/H(->bb) for full run2 Ultra Legacy Campaigns', 
-                                formatter_class=argparse.RawTextHelpFormatter,
-                                usage = "")
-parser.add_argument('-q', '--queue', action='store',
-                                    dest= 'queue',
-                                    default='1nh',
-                                    choices=['condor', 'condor_spool', '1nh'],
-                                    type=str,
-                                    help='more options : [pbs|sge|condor|lsf|ge|slurm|htcaas|htcaas2] Use for cluster run only')
-parser.add_argument('-s', '--scheme', action='store', 
-                                      default='', 
-                                      choices=['', '4FS', '5FS'], 
-                                      help='production shceme')
-parser.add_argument('-o', '--order', action='store', 
-                                      default='NLO', 
-                                      choices=['LO', 'NLO'], 
-                                      help='production shceme')
-parser.add_argument('--test', action='store_true', 
-                                      help='Generate 1 set of cards stored by default in  example_cards/')
-# If you are not sure about your pdf sets setting, better use DEFAULT !
-parser.add_argument('-pdf', '--lhapdfsets',   action='store', 
-                                              dest='lhapdfsets', 
-                                              default='DEFAULT', 
-                                              type=str, 
-                                              help=''' Few links may help you to make the choice:'\n
-                                                       https://twiki.cern.ch/twiki/bin/view/CMS/QuickGuideMadGraph5aMCatNLO#PDF_Choice_for_2017_production\n
-                                                       https://monte-carlo-production-tools.gitbook.io/project/mccontact/info-for-mc-production-for-ultra-legacy-campaigns-2016-2017-2018\n
-                                                    ''')
-parser.add_argument('-lhaid', '--lhaid', action='store',
-                                         dest='lhaid',
-                                         type=int,
-                                         help = 'LHAPDF ID(ver 6.3.0) : Full list here : https://lhapdf.hepforge.org/pdfsets')
-options = parser.parse_args()
-options.order= options.order.upper()
-options.scheme= options.scheme.upper()
 
-def which_points(grid):
+def which_points(test=False, dataDir="./data"):
+    grid = {}
     grid['example_card'] = [
-        ( 500, 300),
-        ]
+        ( 500, 300),]
     grid['fullsim'] = [
         #(MH, MA)
         ( 200, 50), ( 200, 100),
-        (250, 50), ( 250, 100),
+        ( 250, 50), ( 250, 100),
         ( 300, 50), ( 300, 100), ( 300, 200),
         ( 500, 50), ( 500, 100), ( 500, 200), ( 500, 300), ( 500, 400),
         ( 650, 50),
         ( 800, 50), ( 800, 100), ( 800, 200),              ( 800, 400),              ( 800, 700),
-        (1000, 50),              (1000, 200),                           (1000, 500),
-    ]
+        (1000, 50),              (1000, 200),                           (1000, 500), ]
     
-    with open('data/points_1.000000_1.000000.json') as f:
+    with open(os.path.join(dataDir,'points_1.000000_1.000000.json')) as f:
         d = json.load(f)
-        # format the output into tuples
         grid['ellipses_rho_1'] = [(mH, mA,) for mA, mH in d]
     
-    with open('data/points_0.500000_0.500000.json') as f:
+    with open(os.path.join(dataDir,'points_0.500000_0.500000.json')) as f:
         d = json.load(f)
-        # format the output into tuples
         grid['ellipses_rho_0p5'] = [(mH, mA,) for mA, mH in d]
-    return grid
+    griddata = (grid['example_card'] if options.test else(grid['fullsim'] + grid['ellipses_rho_1']))
+    return griddata
 
 def mass_to_string(m):
     r = '{:.2f}'.format(m)
@@ -98,9 +64,31 @@ def float_to_mass(m):
     r = '{:.2f}'.format(m)
     return float(r)
 
-def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
-    global options
-    global lhaid
+def getLHAPDF(lhaid=None, lhapdfsets="DEFAULT", flavourscheme=None):
+    if lhapdfsets == 'DEFAULT':
+        logger.warning( '''The following ** $DEFAULT_PDF_SETS ** is shortcuts to have the PDF sets automatically added to the run_card at run time to avoid specifying them directly.\n 
+                           Be careful this is valid at both LO and NLO !\n''')
+        lhaid = '$DEFAULT_PDF_SETS'
+    elif lhapdfsets == 'NNPDF31': 
+        if flavourscheme == '4FS':
+            logger.info( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite 4-FlavourScheme set will be used instead\n 
+                            LHA Name = NNPDF31_nnlo_as_0118_nf_4_mc_hessian\n 
+                            LHA ID = 325500\n 
+                            make sure this is compatible with the generated process in the proc_card and lhaid in the run_card **\n''')
+            lhaid= 325500
+        else:    
+            logger.info( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite set will be used instead\n 
+                            LHA Name = NNPDF31_nnlo_as_0118_mc_hessian_pdfas\n 
+                            LHA ID = 325300\n 
+                            make sure this is compatible with the generated process in the proc_card and lhaid in the run_card **\n''')
+            lhaid = 325300
+    else:
+        if lhaid is None:
+            logger.error( "CRITICAL: lhaid can't be NONE ")
+
+    return lhapdfsets, lhaid
+
+def compute_widths_BR_and_lambdas(mH, mA, mh, tb, pdfName="DEFAULT", saveprocessinfos=False):
     
     xsec_ggH = 0.
     xsec_bbH = 0.
@@ -134,33 +122,8 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     res = Calc2HDM(mode = mode, sqrts = sqrts, type = type,
                    tb = tb, m12 = m12, mh = mh, mH = mH, mA = mA, mhc = mhc, sba = sinbma,
                    outputFile = outputFile, muR = 1., muF = 1.)
-   
-    if options.lhapdfsets == 'DEFAULT':
-        logger.warning( 'The following ** $DEFAULT_PDF_SETS ** is shortcuts to have the PDF sets automatically added to the run_card at run time to avoid specifying them directly\n. Be careful this is valid at both LO and NLO !\n')
-        lhaid = '$DEFAULT_PDF_SETS'
-    elif options.lhapdfsets == 'NNPDF31': 
-        if options.scheme == '4FS':
-            logger.info( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite 4Flavor-scheme set will be used instead\n 
-                            LHA Name = NNPDF31_nnlo_as_0118_nf_4_mc_hessian\n 
-                            LHA ID = 325500\n 
-                            make sure this is compatible with the generated process in the proc_card and lhaid in the run_card **\n'''
-                )
-            res.setpdf('NNPDF31_nnlo_as_0118_nf_4_mc_hessian')
-            lhaid= 325500
-        else:    
-            logger.info( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite set will be used instead\n 
-                            LHA Name = NNPDF31_nnlo_as_0118_mc_hessian_pdfas\n 
-                            LHA ID = 325300\n 
-                            make sure this is compatible with the generated process in the proc_card and lhaid in the run_card **\n'''
-                )
-            res.setpdf('NNPDF31_nnlo_as_0118_mc_hessian_pdfas')
-            lhaid = 325300
-    else:
-        res.setpdf(options.lhapdfsets )
-        lhaid = options.lhaid
-        if lhaid is None:
-            logger.error( "CRITICAL: lhaid can't be NONE ")
-    
+    if pdfName !='DEFAULT':
+        res.setpdf(pdfName)    
     res.computeBR()
     wH = float(res.Hwidth)
     wA = float(res.Awidth)
@@ -172,33 +135,33 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb):
     HtoZABR = res.HtoZABR
     HtobbBR = res.HtobbBR
     
-    if save_crosssectionsInfo:
+    if saveprocessinfos:
         xsec_ggH, err_integration_ggH, err_muRm_ggH, err_muRp_ggH, xsec_bbH, err_integration_bbH =  res.getXsecFromSusHi()
     
     os.chdir(cwd)
-    return wH, wA, l2, l3, lR7, sinbma, tb , xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH #, AtoZhBR, AtobbBR, HtoZABR, HtobbBR
+    return wH, wA, l2, l3, lR7, sinbma, tb , xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH, HtoZABR, AtobbBR
 
-def filename(suffix, template=False, mH=None, mA=None, tb=None):
-    tmp = ''
-    masses = ''
+def filename(suffix, smpdetails=None, template=False, mH=None, mA=None, tb=None):
+    MASSES_TEMPLATE = '200_50_1' # FIXME immprove the way reading these templates files ! 
     if template:
-        tmp = 'template_'
         masses = MASSES_TEMPLATE
+        cardName = 'template_' + 'HToZATo2L2B_' + masses+ '_' + smpdetails +'/HToZATo2L2B_' + masses + '_' + smpdetails+ '_' + suffix +'.dat'
     else:
         masses = '{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string( tb))
-    return '{}/'.format(ouputDIR) + tmp + 'HToZATo2L2B_' + masses + '_' + smpdetails +'/HToZATo2L2B_' + masses + '_' + smpdetails+ '_' + suffix +'.dat'
+        cardName = 'HToZATo2L2B_' + masses + '_' + smpdetails +'/HToZATo2L2B_' + masses + '_' + smpdetails+ '_' + suffix +'.dat'
+    return cardName
 
-def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
+def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb, lhaid, smpdetails, templateDIR, outputDIR):
     process_name = 'HToZATo2L2B_{}_{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string( tb), smpdetails)
-    directory = '{}/'.format(ouputDIR) + process_name
+    directory = '{}/'.format(outputDIR) + process_name
     # First: create directory if it doesn't exist
     if not os.path.exists(directory):
         os.makedirs(directory)
     # customizecards
     suffix = 'customizecards'
     template_line = 'set param_card'
-    with open(filename(suffix, template=True), 'r') as inf:
-        with open(filename(suffix, mH=mH, mA=mA, tb=tb), 'w+') as outf:
+    with open(os.path.join(templateDIR, filename(suffix, smpdetails, template=True)), 'r') as inf:
+        with open(os.path.join(outputDIR, filename(suffix, smpdetails, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
             for line in inf:
                 if template_line in line and 'higgs 1' in line:
                     outf.write('{} higgs 1 {:.6f}\n'.format(template_line, l2))
@@ -238,19 +201,19 @@ def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
             outf.write('# frblock 2: sinbma\n')
     # extramodels: no change needed
     suffix = 'extramodels'
-    shutil.copyfile(filename(suffix, template=True), filename(suffix, mH=mH, mA=mA, tb=tb))
+    shutil.copyfile(os.path.join(templateDIR, filename(suffix, smpdetails, template=True)), os.path.join(outputDIR, filename(suffix, smpdetails, mH=mH, mA=mA, tb=tb)))
     # proc_card: change the output name
     suffix = 'proc_card'
-    with open(filename(suffix, template=True), 'r') as inf:
-        with open(filename(suffix, mH=mH, mA=mA, tb=tb), 'w+') as outf:
+    with open(os.path.join(templateDIR, filename(suffix, smpdetails, template=True)), 'r') as inf:
+        with open(os.path.join(outputDIR, filename(suffix, smpdetails, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
             for line in inf:
-                if ('output HToZATo2L2B_' + MASSES_TEMPLATE) in line:
+                if ('output') in line:
                     outf.write('output HToZATo2L2B_{}_{}_{}_{} -nojpeg'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
                 else:
                     outf.write(line)
     suffix = 'run_card'
-    with open(filename(suffix, template=True), 'r') as inf:
-         with open(filename(suffix, mH=mH, mA=mA, tb=tb), 'w+') as outf:
+    with open(os.path.join(templateDIR, filename(suffix, smpdetails, template=True)), 'r') as inf:
+         with open(os.path.join(outputDIR, filename(suffix, smpdetails, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
              for line in inf:
                  if 'lhaid' in line:
                      outf.write('{} = lhaid ! if pdlabel=lhapdf, this is the lhapdf number\n'.format(lhaid))
@@ -259,44 +222,36 @@ def prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb):
                  else:
                      outf.write(line)
     suffix = 'madspin_card'
-    shutil.copyfile(filename(suffix, template=True), filename(suffix, mH=mH, mA=mA, tb=tb))
-    print ('MG5 files prepared in {}/HToZATo2L2B_{}_{}_{}_{}'.format(ouputDIR, mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
+    shutil.copyfile(os.path.join(templateDIR, filename(suffix, smpdetails, template=True)), os.path.join(outputDIR, filename(suffix, smpdetails, mH=mH, mA=mA, tb=tb)))
+    print ('MG5 files prepared in {}/HToZATo2L2B_{}_{}_{}_{}'.format(outputDIR, mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
     return
 
-def prepare_all_MG5_cards():
-    grid = {}
-    grid = which_points(grid)
-    griddata = (grid['example_card'] if options.test else(grid['fullsim'] + grid['ellipses_rho_1']))
-    suffix= ('example' if options.test else('all'))
-    tb_list = ([1.5] if options.order =='LO' else([20.0]))
-    #tb_list = [0.5,1.0,1.5,2.0,5.0,6.0,8.0,10.0,15.0,20.0,30.0,40.0,50.0]
+def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lhaid=None, queue="condor_spool", test=False, gridpointsdata=None, templateDIR=None, saveprocessinfos=False):
+    
+    griddata = which_points(test, gridpointsdata)
+    suffix= ('example' if test else('all'))
+    outputDIR = ( 'example_cards' if test else( 'PrivateProd_run2'))
 
     mh=125.
-    save_crosssectionsInfo = False
     
-    global smpdetails
-    global ouputDIR
-    global save_crosssectionsInfo
-
-    ouputDIR = ( 'example_cards' if options.test else( 'PrivateProd_run2'))
-    if options.order=='LO':
+    pdfName, lhaid = getLHAPDF(lhapdfsets=lhapdfsets, lhaid=lhaid, flavourscheme=flavourscheme)
+    
+    if process=='ggH':
+        OrderOfcomputation= 'LO'
         smpdetails= 'ggH_TuneCP5_13TeV_pythia8'
+        tb_list = [1.5]
+        #tb_list = [0.5,1.0,1.5,2.0,5.0,6.0,8.0,10.0,15.0,20.0,30.0,40.0,50.0]
     else:
+        OrderOfcomputation= 'NLO'
         smpdetails= 'bbH4F_TuneCP5_13TeV-amcatnlo_pythia8'
-    with open('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()), 'w+') as outf:
-        outf.write('# Please run the following on lxplus\n')
+        tb_list= [20.0]
+
+    with open('prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()), 'w+') as outf:
         outf.write('# Notes:\n')
-        outf.write('# - you must not have setup any cmsenv\n')
+        outf.write('# - This script was generated by prepare_MG5_cards.py\n')
+        outf.write('# - It should be run from the genproductions/bin/MadGraph5_aMCatNLO directory in a clean environment and will submit the gridpack generation for all points.\n')
         outf.write('# - each gridpack generation should take about 20 minutes\n')
         outf.write('set -x\n')
-        outf.write("ZADIR= 'ZAPrivateProduction'\n")
-        outf.write('if [[ ! -d "$ZADIR" ]]; then\n')
-        outf.write('    git clone -o upstream git@github.com:cp3-llbb/ZAPrivateProduction.git\n')
-        outf.write('    git remote add origin git@github.com:kjaffel/ZAPrivateProduction.git\n')
-        outf.write('fi\n')
-        outf.write('pushd ZAPrivateProduction\n')
-        outf.write('git fetch origin\n')
-        outf.write('git checkout origin/master\n')
         outf.write("GenDIR= 'genproductions'\n")
         outf.write('if [[ ! -d "$GenDIR" ]]; then\n')
         outf.write('    git clone  -o origin https://github.com/cms-sw/genproductions.git\n')
@@ -309,7 +264,7 @@ def prepare_all_MG5_cards():
         outf.write('git pull\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/\n')
         # Copy only the example cards for review  !
-        if options.test:
+        if test:
             outf.write("CardsDIR= 'HToZATo2L2B_ggfusion_b-associatedproduction'\n")
             outf.write('if [[ ! -d "$CardsDIR" ]]; then\n')
             outf.write('    mkdir HToZATo2L2B_ggfusion_b-associatedproduction/\n')
@@ -320,7 +275,7 @@ def prepare_all_MG5_cards():
         outf.write('popd\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO\n')
 
-        if 'condor' in options.queue:
+        if 'condor' in queue:
             outf.write('./submit_condor_gridpack_generation.sh\n')
         else:
             outf.write('# kEEP IN MIND : IF You are submitting from lxplus and the local directory is not on AFS \n')
@@ -328,12 +283,13 @@ def prepare_all_MG5_cards():
             outf.write('# So you have to call : ./submit_condor_gridpack_generation.sh \n')
         outf.write('# Now for the real gridpack production\n')
         
-        datasetName_xsc_file =os.path.join("data/","list_{}_{}_datasetnames.txt".format(suffix, options.order.lower()))
-        if save_crosssectionsInfo:
+        datasetName_xsc_file =os.path.join(gridpointsdata,"list_{}_{}_datasetnames.txt".format(suffix, process))
+        if saveprocessinfos:
             if os.path.exists(datasetName_xsc_file):
                 os.remove(datasetName_xsc_file)
             f= open(datasetName_xsc_file,"a")
-            f.write('DatasetName Sushi_xsc[pb] Sushi_xsc_err[pb]\n')
+            precision =("NNLO" if process=='bbH' else"NLO")
+            f.write('DatasetName Sushi_xsc@%sprecision [pb]  Sushi_xsc_err [pb]   BR(H -> ZA )    BR( A -> bb)\n'%precision)
         
         for H, A in griddata:
             mH = float_to_mass(H)
@@ -345,17 +301,17 @@ def prepare_all_MG5_cards():
             #    outf.write(s + '\n')
             #    continue
             for tb in tb_list:
-                wH, wA, l2, l3, lR7, sinbma, tb, xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH = compute_widths_BR_and_lambdas(mH, mA, mh, tb)
-                prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb)
+                wH, wA, l2, l3, lR7, sinbma, tb, xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH, HtoZABR, AtobbBR = compute_widths_BR_and_lambdas(mH, mA, mh, tb, pdfName=pdfName, saveprocessinfos=False)
+                prepare_cards(mH, mA, mh, wH, wA, l2, l3, lR7, sinbma, tb, lhaid, smpdetails, templateDIR, outputDIR)
                 
                 name = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
-                if save_crosssectionsInfo:
-                    xsc = (xsec_ggH if options.order=='LO' else(xsec_bbH))
-                    err = (err_integration_ggH if options.order=='LO' else( err_integration_bbH))
-                    f.write('{} {} {}\n'.format(name, xsc ,err))
-                loc = ('HToZATo2L2B_ggfusion_b-associatedproduction/example_cards' if options.test else ('PrivateProd_run2') )
+                if saveprocessinfos:
+                    xsc = (xsec_ggH if process=='ggH' else(xsec_bbH))
+                    err = (err_integration_ggH if process=='ggH' else( err_integration_bbH))
+                    f.write('{} {} {} {} {}\n'.format(name, xsc ,err, HtoZABR, AtobbBR))
+                loc = ('HToZATo2L2B_ggfusion_b-associatedproduction/example_cards' if test else ('PrivateProd_run2') )
                 carddir ="cards/production/13TeV/{}/{}".format(loc, name)
-                workqueue='{}'.format(options.queue)
+                workqueue='{}'.format(queue)
                 scram_arch="slc7_amd64_gcc820"
                 cmssw_version="CMSSW_11_2_0_pre7"
                 
@@ -373,11 +329,29 @@ def prepare_all_MG5_cards():
 
         outf.write('set +x\n')
         
-        if save_crosssectionsInfo:
+        if saveprocessinfos:
             f.close()
     
-    os.chmod('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()), os.stat('prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower())).st_mode | stat.S_IXUSR)
-    print ('All commands prepared in ./prepare_{}_{}_gridpacks.sh'.format(suffix, options.order.lower()))
+    os.chmod('prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()), os.stat('prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower())).st_mode | stat.S_IXUSR)
+    print ('All commands prepared in ./prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()))
 
 if __name__ == '__main__':
-    prepare_all_MG5_cards()
+
+    parser = argparse.ArgumentParser(description='Preparing Grid Pack for 2HDM H/A-> Z(->ll) A/H(->bb) for full run2 Ultra Legacy Campaigns', formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-q', '--queue', action='store', dest= 'queue', default='1nh', choices=['condor', 'condor_spool', '1nh', 'slurm'], type=str, help='more options : [pbs|sge|condor|lsf|ge|slurm|htcaas|htcaas2] Use for cluster run only')
+    parser.add_argument('-s', '--flavourscheme', action='store', default=None, choices=[None, '4FS', '5FS'],  help='production shceme')
+    parser.add_argument('-o', '--process', action='store', default='ggH', choices=['ggH', 'bbH'], help='production shceme')
+    parser.add_argument("--gridpoints", default="./data", help="Directory with grid points data in JSON format")
+    parser.add_argument('--test', action='store_true', help='Generate 1 set of cards stored by default in  example_cards/')
+    parser.add_argument('--saveprocessinfos', action='store_true', help='store xsc for each process in .txt file in ./gridpoints')
+    parser.add_argument('--templates', required=True, help='''Directory with 5 templates cards for your requested process:\n 
+                            [ template_customizecards.dat, template_extramodels.dat, template_madspin_card.dat,  template_proc_card.dat, template_run_card.dat]\n''')
+    # If you are not sure about your pdf sets setting, better use DEFAULT !
+    parser.add_argument('-pdf', '--lhapdfsets',   action='store', dest='lhapdfsets', default='DEFAULT', type=str, 
+                    help=('Few links may help you to make the choice:\n'
+                          'https://twiki.cern.ch/twiki/bin/view/CMS/QuickGuideMadGraph5aMCatNLO#PDF_Choice_for_2017_production\n'
+                          'https://monte-carlo-production-tools.gitbook.io/project/mccontact/info-for-mc-production-for-ultra-legacy-campaigns-2016-2017-2018\n'))
+    parser.add_argument('-lhaid', '--lhaid', action='store',dest='lhaid', type=int, help = 'LHAPDF ID(ver 6.3.0) : Full list here : https://lhapdf.hepforge.org/pdfsets')
+    options = parser.parse_args()
+    
+    prepare_all_MG5_cards(process=options.process, flavourscheme=options.flavourscheme, lhapdfsets=options.lhapdfsets, lhaid=options.lhaid, test=options.test, queue=options.queue, gridpointsdata=options.gridpoints, templateDIR=options.templates, saveprocessinfos=options.saveprocessinfos)
