@@ -1,6 +1,56 @@
-# ZA Private production
-Starting point: [MCM of one of our MiniAOD signal samples](https://cms-pdmv.cern.ch/mcm/requests?prepid=HIG-RunIISummer16MiniAODv2-01385&page=0&shown=127), from which you can find the [MCM chain](https://cms-pdmv.cern.ch/mcm/chained_requests?prepid=HIG-chain_RunIIWinter15wmLHE_flowLHE2Summer15GS_flowRunIISummer16DR80PremixPUMoriond17_flowRunIISummer16PremixMiniAODv2-00591&page=0&shown=15) where it links all of the steps.
+# Khawla: Full RunII H/A->ZA/H->llbb 
+## GridPacks production and events generation for full run2 ULegacy
+## Setup Your Enviroment and Prepare Template cards:
+This needs 2HDMC, which is a general-purpose calculator for the two-Higgs doublet model.
+It allows parametrization of the Higgs potential in many different ways, convenient specification of generic Yukawa sectors, the evaluation of decay widths (including higher-order QCD corrections), theoretical constraints and much more.
 
+You can install Calculators42HDM in a CMSSW release (recommended)
+or a conda environment (which requires a few changes to the script), see the [installation instructions](https://github.com/kjaffel/Calculators42HDM/blob/master/README.md).
+## GridPacks Preparation:
+### Example of Template Cards:
+- For each process we have a dir template, whatever changes you need to make it has to be for these cards Only !
+```bash
+# gg Fusion; LO Loop Induced 4F-scheme
+cd run2Template_cards/template_HToZATo2L2B_200_50_1_ggH_TuneCP5_13TeV_pythia8`
+# b-associated Production; NLO 4F-scheme
+cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8`
+```
+### How to Run:
+```python
+./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards
+```
+- ``-p``/``process``: bbH or ggH
+- ``-q``/``--queue``: condor, slurm or 1nh 
+- ``--templates`` : a directory with run cards for the two processes, each in a subdirectory
+- ``--gridpoints``: a directory with the JSON files with (mA, mH) points definitions
+- ``--test`` : will produce 1 set of cards for each process, saved by default in ``example_cards/``, remove these args to get the full list of ZAsamples for run2ULegacy saved by default in ``PrivateProd_run2``
+- ``--lhaid``: will be set to ``$DEFAULT_PDF_SETS`` as shortcuts to have the PDF sets automatically
+               and added to the ``run_card`` at run time to avoid specifying them directly
+    ```
+    lhapdf = pdlabel ! PDF set
+    $DEFAULT_PDF_SETS = lhaid
+    $DEFAULT_PDF_MEMBERS  = reweight_PDF
+    ```
+## GridPacks Generation:
+Inside the cards output directory (``example_cards`` or ``PrivateProd_run2``) a simple shell script is generated to produce all the gridpacks for each process.
+```bash
+./prepare_example_nlo_gridpacks.sh
+./prepare_example_lo_gridpacks.sh
+```
+## Trouble-Shooting:
+- For long jobs, the afs permissions may expire for the master job and it's subprocesses before completion, which will result in file read errors and failure. The command `k5reauth` allows the kerberos 5 permissions to be updated for a job and its subprocesses. Instructions to obtain and start a tmux session with k5reauth are given[here](https://hsf-training.github.io/analysis-essentials/shell-extras/screen2.html) and [here](https://twiki.cern.ch/twiki/bin/viewauth/CMS/QuickGuideMadGraph5aMCatNLO)
+- Let's define 'ktmux' function in your ~/.bashrc by adding the  following lines:
+```bash
+ktmux(){
+    if [[ -z "$1" ]]; then #if no argument passed
+        k5reauth -f -i 3600 -p <your account name> -k <path_to_your_keytab>/<your account name>.keytab -- tmux new-session
+    else #pass the argument as the tmux session name
+        k5reauth -f -i 3600 -p <your account name> -k <path_to_your_keytab>/<your account name>.keytab -- tmux new-session -s $1
+    fi
+}
+```
+# Alessia: ZA Private production
+Starting point: [MCM of one of our MiniAOD signal samples](https://cms-pdmv.cern.ch/mcm/requests?prepid=HIG-RunIISummer16MiniAODv2-01385&page=0&shown=127), from which you can find the [MCM chain](https://cms-pdmv.cern.ch/mcm/chained_requests?prepid=HIG-chain_RunIIWinter15wmLHE_flowLHE2Summer15GS_flowRunIISummer16DR80PremixPUMoriond17_flowRunIISummer16PremixMiniAODv2-00591&page=0&shown=15) where it links all of the steps.
 ## Initial setup
 ```bash
 cms_env
@@ -13,7 +63,6 @@ scram p CMSSW CMSSW_7_1_20_patch2
 export SCRAM_ARCH=slc6_amd64_gcc530
 scram p CMSSW CMSSW_8_0_21
 ```
-
 ## Preparing gridpacks
 ```bash
 # Fetch some cards to modify
