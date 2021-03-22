@@ -7,17 +7,19 @@ set param_card frblock 1 20.000000
 set param_card frblock 2 0.999950
 # Settings for the scalar bosons masses 
 set param_card mass 25 125.00
-set param_card mass 36 193.26
 set param_card mass 35 442.63
+set param_card mass 36 193.26
+set param_card mass 37 442.63
 # Settings for the scalar widths 
-set param_card width 36 1.679274
-set param_card width 35 15.172424
+set param_card width 36 1.641177
+set param_card width 35 15.097470
 # higgs 1: lambda 2
 # higgs 2: lambda 3
 # higgs 3: lambda Real 7
 # mass 25: mh
-# mass 36: mA
 # mass 35: mH
+# mass 36: mA
+# mass 37: mHc
 # width 36: wA
 # width 35: wH
 # frblock 1: tb
