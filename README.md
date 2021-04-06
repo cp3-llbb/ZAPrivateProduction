@@ -49,6 +49,23 @@ ktmux(){
     fi
 }
 ```
+
+## Computing decay rates for 2HDM with FeynRules and MadGraph5aMC@NLO :[arxiv.1402.1178](https://arxiv.org/pdf/1402.1178.pdf)
+```python
+python prepare_paramcard.py --run_beforeYukawaFix --run_afterYukawaFix
+```
+```bash
+cd MG5_aMC_vX_X_X
+./bin/mg5_aMC run_madwidths.sh
+```
+```python
+python comparewidths_and_BR.py --default_cardsDIR=./widths_crosschecks/run_beforeYukawaFix/outputs/ --madspin_cardsDIR=./widths_crosschecks/run_afterYukawaFix/outputs/ 
+# more options 
+--thdmc_cardsDIR : if not given Calculators42HDM will recompute the width of h3 in range(50., 1500.)
+--BR             : plot BR( H1 -> bb)
+--NWA            : plot TotalWidth/M(h3) = f(mh3)
+```
+
 # Alessia: ZA Private production
 Starting point: [MCM of one of our MiniAOD signal samples](https://cms-pdmv.cern.ch/mcm/requests?prepid=HIG-RunIISummer16MiniAODv2-01385&page=0&shown=127), from which you can find the [MCM chain](https://cms-pdmv.cern.ch/mcm/chained_requests?prepid=HIG-chain_RunIIWinter15wmLHE_flowLHE2Summer15GS_flowRunIISummer16DR80PremixPUMoriond17_flowRunIISummer16PremixMiniAODv2-00591&page=0&shown=15) where it links all of the steps.
 ## Initial setup
