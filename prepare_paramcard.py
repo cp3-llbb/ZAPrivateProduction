@@ -39,7 +39,19 @@ def call_Calculators42HDM(mH=None, mA=None, mh=None, mhc=None, tb=None):
     alpha=math.atan(tb)-math.acos(cba)
     sinbma = math.sin(math.atan(tb)-alpha)
     m12 = math.sqrt(pow(mhc, 2) * tb / (1 + pow(tb, 2)))
-    
+    BRdict = {
+            'BRhtoss': [],
+            'BRhtocc': [],
+            'BRhtobb': [],
+            'BRhtoee': [],
+            'BRhtomumu': [],
+            'BRhtotautau': [],
+            'BRhtogg': [],
+            'BRhtoZZ': [],
+            'BRhtoWW': [],
+            'BRhtoZga': [],
+            'BRhtogluglu': [],}
+
     outputFile = 'out_param_card_{}_{}_{}.dat'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string( tb))
     cwd = os.getcwd()
     #os.chdir(os.path.join(CMSSW_Calculators42HDM, 'out'))
@@ -66,10 +78,24 @@ def call_Calculators42HDM(mH=None, mA=None, mh=None, mhc=None, tb=None):
     lR7 = float(res.lambda_7)
     wh3tobb = res.wh3tobb
     wh3tot = float(res.Awidth)
+    
+    BRdict['BRhtoss'].append(res.htossBR)
+    BRdict['BRhtocc'].append(res.htoccBR)
+    BRdict['BRhtobb'].append(res.htobbBR)
+    BRdict['BRhtoee'].append(res.htoeeBR)
+    BRdict['BRhtomumu'].append(res.htomumuBR)
+    BRdict['BRhtotautau'].append(res.htotautauBR)
+    BRdict['BRhtogg'].append(res.htoggBR) # gamma-gamma
+    BRdict['BRhtoZZ'].append(res.htoZZBR)
+    BRdict['BRhtoWW'].append(res.htoWWBR)
+    BRdict['BRhtoZga'].append(res.htoZgaBR)
+    BRdict['BRhtogluglu'].append(res.htoglugluBR)
+
     os.chdir(cwd) 
     # mv these file in the end , otherwise Calc2HDM won't run properly 
-    #shutil.move(outputFile, './widths_crosschecks/run_2hdmc180/')
-    return l2, l3, lR7, wh3tot, wh3tobb, sinbma
+    shutil.move(os.path.join(CMSSW_Calculators42HDM, outputFile), os.path.join('./widths_crosschecks/run_2hdmc180/', outputFile))
+    shutil.move(os.path.join(CMSSW_Calculators42HDM, outputFile.replace('.dat', '.log')), os.path.join('./widths_crosschecks/run_2hdmc180/', outputFile.replace('.dat', '.log')))
+    return l2, l3, lR7, wh3tot, wh3tobb, sinbma, BRdict
 
 def call_BottomYukawacoupling(mh3=None, tanbeta=None, wh3tobb=None):
     MB = 4.75 # mb pole mass
@@ -96,19 +122,19 @@ def call_BottomYukawacoupling(mh3=None, tanbeta=None, wh3tobb=None):
 def prepare_parameters(mH=None, mA=None, mh=None, mhc=None, MB=None, l2=None, l3=None, lR7=None, sinbma=None, tb=None, ymb=None, pass_ymbandmb_toparamcards=False):
     with open(os.path.join('widths_crosschecks', 'template_param_card.dat'), 'r') as inf:
         
-        inCARDSDIR = '{}/inputs'.format('run_afterYukawaFix' if pass_ymbandmb_toparamcards else('run_beforeYukawaFix') )
+        inCARDSDIR = './widths_crosschecks/{}/inputs'.format('run_afterYukawaFix' if pass_ymbandmb_toparamcards else('run_beforeYukawaFix') )
         if not os.path.exists(inCARDSDIR):
             os.makedirs(inCARDSDIR)
         
-        with open(os.path.join("./widths_crosschecks", inCARDSDIR, "in_param_card_{}_{}_{}.dat".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))), 'w+') as outf:
+        with open(os.path.join(inCARDSDIR, "in_param_card_{}_{}_{}.dat".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))), 'w+') as outf:
             for line in inf:
                 # BLOCK MASS #
-                if " MB " in line and not pass_ymbandmb_toparamcards:
+                if " MB " in line and pass_ymbandmb_toparamcards:
                     outf.write('      5 {:.6f}   # MB\n'.format(MB))
-                elif "mhc" in line and not pass_ymbandmb_toparamcards:
+                elif "mhc" in line and pass_ymbandmb_toparamcards:
                     outf.write('      37 {:.6f}   # mhc\n'.format(mhc))
                 # BLOCK YUKAWA # 
-                elif "ymb" in line and not pass_ymbandmb_toparamcards:
+                elif "ymb" in line and pass_ymbandmb_toparamcards:
                     outf.write('      5 {:.8f}   # ymb\n'.format(ymb))
                 # BLOCK FRBLOCK # 
                 elif "tanbeta" in line:
@@ -146,19 +172,21 @@ def prepare_computewidths_script(run_beforeYukawaFix=False, run_afterYukawaFix=F
             mA= mh3
             mhc=max(mH, mA)
             for tb in [1.5, 20.]:
-                l2, l3, lR7, wh3tot, wh3tobb, sinbma = call_Calculators42HDM( mH, mA, mh, mhc, tb)
+                l2, l3, lR7, wh3tot, wh3tobb, sinbma, BRdict= call_Calculators42HDM( mH, mA, mh, mhc, tb)
                 ymb = call_BottomYukawacoupling(mA, tb, wh3tobb)
                
-                if run_beforeYukawaFix:
-                    prepare_parameters(mH, mA, mh, mhc, MB, l2, l3, lR7, sinbma, tb, ymb, pass_ymbandmb_toparamcards=False)
+                if run_afterYukawaFix:
+                    prepare_parameters(mH, mA, mh, mhc, MB, l2, l3, lR7, sinbma, tb, ymb, pass_ymbandmb_toparamcards=True)
                     inputsfiles= './widths_crosschecks/run_afterYukawaFix/inputs/in_param_card_{}_{}_{}.dat'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
                     outputsfiles= './widths_crosschecks/run_afterYukawaFix/outputs/out_param_card_{}_{}_{}.dat'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
                     outf.write('compute_widths h1 h2 h3 --path={} --output={} --body_decay=2\n'.format(inputsfiles, outputsfiles))
-                if run_afterYukawaFix:
-                    prepare_parameters(mH, mA, mh, mhc, MB, l2, l3, lR7, sinbma, tb, ymb, pass_ymbandmb_toparamcards=True)
+                    #outf.write('compute_widths h1 h2 h3 --path={} --output={}\n'.format(inputsfiles, outputsfiles))
+                if run_beforeYukawaFix:
+                    prepare_parameters(mH, mA, mh, mhc, MB, l2, l3, lR7, sinbma, tb, ymb, pass_ymbandmb_toparamcards=False)
                     inputsfiles= './widths_crosschecks/run_beforeYukawaFix/inputs/in_param_card_{}_{}_{}.dat'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
                     outputsfiles= './widths_crosschecks/run_beforeYukawaFix/outputs/out_param_card_{}_{}_{}.dat'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
                     outf.write('compute_widths h1 h2 h3 --path={} --output={} --body_decay=2\n'.format(inputsfiles, outputsfiles))
+                    #outf.write('compute_widths h1 h2 h3 --path={} --output={} \n'.format(inputsfiles, outputsfiles))
             mh3 += 50.
     os.chmod('run_madwidths.sh', os.stat('run_madwidths.sh').st_mode | stat.S_IXUSR)
 
