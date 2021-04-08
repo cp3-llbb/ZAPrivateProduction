@@ -72,7 +72,9 @@ def call_Calculators42HDM(mH=None, mA=None, mh=None, mhc=None, tb=None):
                                                   outputFile = outputFile, muR = 9.118800e+01, muF = 9.118800e+01)
     res.setpdf('NNPDF31_nnlo_as_0118_nf_4_mc_hessian')
     res.computeBR()
-    
+    if mH == 466.187600 and mA==375.000000 and tb ==20. :
+        xsec_ggH, err_integration_ggH, err_muRm_ggH, err_muRp_ggH, xsec_bbH, err_integration_bbH =  res.getXsecFromSusHi() 
+
     l2 = float(res.lambda_2)
     l3 = float(res.lambda_3)
     lR7 = float(res.lambda_7)
@@ -98,6 +100,7 @@ def call_Calculators42HDM(mH=None, mA=None, mh=None, mhc=None, tb=None):
     return l2, l3, lR7, wh3tot, wh3tobb, sinbma, BRdict
 
 def call_BottomYukawacoupling(mh3=None, tanbeta=None, wh3tobb=None):
+    id = 36
     MB = 4.75 # mb pole mass
     aEWM1= 127.9
     aEW = 1./aEWM1
@@ -117,6 +120,13 @@ def call_BottomYukawacoupling(mh3=None, tanbeta=None, wh3tobb=None):
 
     ymb = math.sqrt((const2 * wh3tobb)/const1)
     yb = ((ymb*math.sqrt(2))/vev)
+    
+    recalculated_width= (MB**2 *const1)/const2
+    width_in_the_banner = wh3tobb
+    relative_diff=abs(recalculated_width-width_in_the_banner)/recalculated_width
+    if (relative_diff > 0.05):
+        logger.warning('The LO estimate for the width of particle %s ' % id)
+        logger.warning('differs from the one in the banner by %d percent ' % (relative_diff*100))
     return ymb
 
 def prepare_parameters(mH=None, mA=None, mh=None, mhc=None, MB=None, l2=None, l3=None, lR7=None, sinbma=None, tb=None, ymb=None, pass_ymbandmb_toparamcards=False):
@@ -163,7 +173,7 @@ def prepare_computewidths_script(run_beforeYukawaFix=False, run_afterYukawaFix=F
     with open('run_madwidths.sh', 'w+') as outf:
         outf.write('import model 2HDMtII_NLO\n')
         
-        mh3=50.
+        mh3=125.
         mh=125.
         MZ= 9.118760e+01
         MB= 4.75
