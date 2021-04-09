@@ -126,45 +126,49 @@ def call_BottomYukawacoupling(mh3=None, tanbeta=None, wh3tobb=None):
     relative_diff=abs(recalculated_width-width_in_the_banner)/recalculated_width
     if (relative_diff > 0.05):
         logger.warning('The LO estimate for the width of particle %s ' % id)
-        logger.warning('differs from the one in the banner by %d percent ' % (relative_diff*100))
+        logger.warning('will differs from the one in the banner by %d percent ' % (relative_diff*100))
     return ymb
 
-def prepare_parameters(mH=None, mA=None, mh=None, mhc=None, MB=None, l2=None, l3=None, lR7=None, sinbma=None, tb=None, ymb=None, pass_ymbandmb_toparamcards=False):
+def prepare_param_cards(mH=None, mA=None, mh=None, mhc=None, MB=None, l2=None, l3=None, lR7=None, sinbma=None, tb=None, ymb=None, carddir=None, cardname=None, pass_ymbandmb_toparamcards=False):
     with open(os.path.join('widths_crosschecks', 'template_param_card.dat'), 'r') as inf:
-        
-        inCARDSDIR = './widths_crosschecks/{}/inputs'.format('run_afterYukawaFix' if pass_ymbandmb_toparamcards else('run_beforeYukawaFix') )
-        if not os.path.exists(inCARDSDIR):
-            os.makedirs(inCARDSDIR)
-        
-        with open(os.path.join(inCARDSDIR, "in_param_card_{}_{}_{}.dat".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))), 'w+') as outf:
+        if carddir==None and cardname==None:
+            carddir = './widths_crosschecks/{}/inputs'.format('run_afterYukawaFix' if pass_ymbandmb_toparamcards else('run_beforeYukawaFix') )
+            cardname= "in_param_card_{}_{}_{}.dat".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
+            if not os.path.exists(carddir):
+                os.makedirs(carddir)
+        else:
+            if not os.path.exists(carddir):
+                os.makedirs(carddir)
+
+        with open(os.path.join(carddir, cardname), 'w+') as outf:
             for line in inf:
                 # BLOCK MASS #
                 if " MB " in line and pass_ymbandmb_toparamcards:
-                    outf.write('      5 {:.6f}   # MB\n'.format(MB))
+                    outf.write('    5 {:.6f}   # MB\n'.format(MB))
                 elif "mhc" in line and pass_ymbandmb_toparamcards:
-                    outf.write('      37 {:.6f}   # mhc\n'.format(mhc))
+                    outf.write('   37 {:.6f}   # mhc\n'.format(mhc))
                 # BLOCK YUKAWA # 
                 elif "ymb" in line and pass_ymbandmb_toparamcards:
-                    outf.write('      5 {:.8f}   # ymb\n'.format(ymb))
+                    outf.write('    5 {:.8f}   # ymb\n'.format(ymb))
                 # BLOCK FRBLOCK # 
                 elif "tanbeta" in line:
-                    outf.write('      1 {:.6f}   # tanbeta\n'.format(tb))
+                    outf.write('    1 {:.6f}   # tanbeta\n'.format(tb))
                 elif "sinbma" in line:
-                    outf.write('      2 {:.8f}   # sinbma\n'.format(sinbma))
+                    outf.write('    2 {:.8f}   # sinbma\n'.format(sinbma))
                 # BLOCK HIGGS # 
                 elif "l2" in line:
-                    outf.write('      1 {:.6f}   # l2\n'.format(l2))
+                    outf.write('    1 {:.6f}   # l2\n'.format(l2))
                 elif "l3" in line:
-                    outf.write('      2 {:.6f}   # l3\n'.format(l3))
+                    outf.write('    2 {:.6f}   # l3\n'.format(l3))
                 elif "lR7" in line:
-                    outf.write('      3 {:.6f}   # lR7\n'.format(lR7))
+                    outf.write('    3 {:.6f}   # lR7\n'.format(lR7))
                 # BLOCK MASS #
                 elif "mh1" in line:
-                    outf.write('      25 {:.6f}   # mh1\n'.format(mh))
+                    outf.write('   25 {:.6f}   # mh1\n'.format(mh))
                 elif "mh2" in line:
-                    outf.write('      35 {:.6f}   # mh2\n'.format(mH))
+                    outf.write('   35 {:.6f}   # mh2\n'.format(mH))
                 elif "mh3" in line:
-                    outf.write('      36 {:.6f}   # mh3\n'.format(mA))
+                    outf.write('   36 {:.6f}   # mh3\n'.format(mA))
                 else:
                     outf.write(line)
     return
@@ -186,13 +190,13 @@ def prepare_computewidths_script(run_beforeYukawaFix=False, run_afterYukawaFix=F
                 ymb = call_BottomYukawacoupling(mA, tb, wh3tobb)
                
                 if run_afterYukawaFix:
-                    prepare_parameters(mH, mA, mh, mhc, MB, l2, l3, lR7, sinbma, tb, ymb, pass_ymbandmb_toparamcards=True)
+                    prepare_param_cards(mH, mA, mh, mhc, MB, l2, l3, lR7, sinbma, tb, ymb, pass_ymbandmb_toparamcards=True)
                     inputsfiles= './widths_crosschecks/run_afterYukawaFix/inputs/in_param_card_{}_{}_{}.dat'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
                     outputsfiles= './widths_crosschecks/run_afterYukawaFix/outputs/out_param_card_{}_{}_{}.dat'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
                     outf.write('compute_widths h1 h2 h3 --path={} --output={} --body_decay=2\n'.format(inputsfiles, outputsfiles))
                     #outf.write('compute_widths h1 h2 h3 --path={} --output={}\n'.format(inputsfiles, outputsfiles))
                 if run_beforeYukawaFix:
-                    prepare_parameters(mH, mA, mh, mhc, MB, l2, l3, lR7, sinbma, tb, ymb, pass_ymbandmb_toparamcards=False)
+                    prepare_param_cards(mH, mA, mh, mhc, MB, l2, l3, lR7, sinbma, tb, ymb, pass_ymbandmb_toparamcards=False)
                     inputsfiles= './widths_crosschecks/run_beforeYukawaFix/inputs/in_param_card_{}_{}_{}.dat'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
                     outputsfiles= './widths_crosschecks/run_beforeYukawaFix/outputs/out_param_card_{}_{}_{}.dat'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
                     outf.write('compute_widths h1 h2 h3 --path={} --output={} --body_decay=2\n'.format(inputsfiles, outputsfiles))
