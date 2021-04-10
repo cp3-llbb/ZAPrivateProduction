@@ -21,18 +21,20 @@ cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo
 ```
 - ``-p``/``process``: bbH or ggH
 - ``-q``/``--queue``: condor, condor_spool, slurm or 1nh 
-- ``-s``/``--flavourscheme``: production scheme 4FS, 5FS or None
+- ``-s``/``--flavourscheme``: Production scheme 4FS, 5FS or None
 - ``--templates`` : a directory with run cards for the two processes, each in a subdirectory
 - ``--gridpoints``: a directory with the JSON files with (mA, mH) points definitions
-- ``--test`` : will produce 1 set of cards for each process, saved by default in ``example_cards/``, remove these args to get the full list of ZAsamples for run2ULegacy saved by default in ``PrivateProd_run2``
-- ``-pdf``/``--lhapdfsets``  : if you pass ``NNPDF31`` , ``NNPDF31_nnlo_as_0118_nf_4_mc_hessian`` with ``lhaid 325500`` will be used for ``4FS`` and ``NNPDF31_nnlo_as_0118_mc_hessian_pdfas`` with lhaid ``325300`` if no scheme arg found !
-                               if you leave this out, the default will be set to ``$DEFAULT_PDF_SETS`` as shortcuts to have the PDF sets automatically and added to the ``run_card`` at run time to avoid specifying them directly
-                                ```
-                                lhapdf = pdlabel ! PDF set
-                                $DEFAULT_PDF_SETS = lhaid
-                                $DEFAULT_PDF_MEMBERS  = reweight_PDF
-                                ```
-                               Or pass different ``--lhapdfsets`` with ``--lhaid``
+- ``--test`` : Will produce 1 set of cards for each process, saved by default in ``example_cards/``, remove these args to get the full list of ZAsamples for run2ULegacy saved by default in ``PrivateProd_run2``
+- ``fullsim``: Generate 21 signal mass points per process saved by default in ``fullsim/``
+- ``benchmarks``: Generate 3 benchmarks scenarios for at high and low mass region of (MH, MA) for 5 different tb values, cards stored by default in  ``benchmarks/``
+- ``-pdf``/``--lhapdfsets``  : If you pass ``NNPDF31`` , ``NNPDF31_nnlo_as_0118_nf_4_mc_hessian`` with ``lhaid 325500`` will be used for ``4FS`` and ``NNPDF31_nnlo_as_0118_mc_hessian_pdfas`` with lhaid ``325300`` if no scheme arg found !
+If you leave this out, the default will be set to ``$DEFAULT_PDF_SETS`` as shortcuts to have the PDF sets automatically and added to the ``run_card`` at run time to avoid specifying them directly
+```
+    lhapdf = pdlabel ! PDF set
+    $DEFAULT_PDF_SETS = lhaid
+    $DEFAULT_PDF_MEMBERS  = reweight_PDF
+```
+OR pass different ``--lhapdfsets`` with ``--lhaid``
 - ``--lhaid``: LHAID number , needed if you want to use different ``--lhapdfsets`` than the one mentionning above !
 
 ## GridPacks Generation:
