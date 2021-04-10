@@ -20,17 +20,21 @@ cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo
 ./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards
 ```
 - ``-p``/``process``: bbH or ggH
-- ``-q``/``--queue``: condor, slurm or 1nh 
+- ``-q``/``--queue``: condor, condor_spool, slurm or 1nh 
+- ``-s``/``--flavourscheme``: production scheme 4FS, 5FS or None
 - ``--templates`` : a directory with run cards for the two processes, each in a subdirectory
 - ``--gridpoints``: a directory with the JSON files with (mA, mH) points definitions
 - ``--test`` : will produce 1 set of cards for each process, saved by default in ``example_cards/``, remove these args to get the full list of ZAsamples for run2ULegacy saved by default in ``PrivateProd_run2``
-- ``--lhaid``: will be set to ``$DEFAULT_PDF_SETS`` as shortcuts to have the PDF sets automatically
-               and added to the ``run_card`` at run time to avoid specifying them directly
-    ```
-    lhapdf = pdlabel ! PDF set
-    $DEFAULT_PDF_SETS = lhaid
-    $DEFAULT_PDF_MEMBERS  = reweight_PDF
-    ```
+- ``-pdf``/``--lhapdfsets``  : if you pass ``NNPDF31`` , ``NNPDF31_nnlo_as_0118_nf_4_mc_hessian`` with ``lhaid 325500`` will be used for ``4FS`` and ``NNPDF31_nnlo_as_0118_mc_hessian_pdfas`` with lhaid ``325300`` if no scheme arg found !
+                               if you leave this out, the default will be set to ``$DEFAULT_PDF_SETS`` as shortcuts to have the PDF sets automatically and added to the ``run_card`` at run time to avoid specifying them directly
+                                ```
+                                lhapdf = pdlabel ! PDF set
+                                $DEFAULT_PDF_SETS = lhaid
+                                $DEFAULT_PDF_MEMBERS  = reweight_PDF
+                                ```
+                               Or pass different ``--lhapdfsets`` with ``--lhaid``
+- ``--lhaid``: LHAID number , needed if you want to use different ``--lhapdfsets`` than the one mentionning above !
+
 ## GridPacks Generation:
 Inside the cards output directory (``example_cards`` or ``PrivateProd_run2``) a simple shell script is generated to produce all the gridpacks for each process.
 ```bash
