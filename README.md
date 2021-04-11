@@ -17,6 +17,7 @@ cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo
 ```
 ### How to Run:
 ```python
+# run a test
 ./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards
 ```
 - ``-p``/``process``: bbH or ggH
@@ -24,9 +25,9 @@ cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo
 - ``-s``/``--flavourscheme``: Production scheme 4FS, 5FS or None
 - ``--templates`` : a directory with run cards for the two processes, each in a subdirectory
 - ``--gridpoints``: a directory with the JSON files with (mA, mH) points definitions
-- ``--test`` : Will produce 1 set of cards for each process, saved by default in ``example_cards/``, remove these args to get the full list of ZAsamples for run2ULegacy saved by default in ``PrivateProd_run2``
-- ``fullsim``: Generate 21 signal mass points per process saved by default in ``fullsim/``
-- ``benchmarks``: Generate 3 benchmarks scenarios for at high and low mass region of (MH, MA) for 5 different tb values, cards stored by default in  ``benchmarks/``
+- ``--fullsim``: Generate 21 signal mass points per process saved by default in ``fullsim/``
+- ``--benchmarks``: Generate 3 benchmarks scenarios for at high and low mass region of (MH, MA) for 5 different tb values, cards stored by default in  ``benchmarks/``
+- ``--test`` : Will produce 1 set of cards for each process, saved by default in ``example_cards/``, if none of the 3 above args found the full list of ZAsamples for run2ULegacy will be produced/saved by default in ``PrivateProd_run2``
 - ``-pdf``/``--lhapdfsets``  : If you pass ``NNPDF31`` , ``NNPDF31_nnlo_as_0118_nf_4_mc_hessian`` with ``lhaid 325500`` will be used for ``4FS`` and ``NNPDF31_nnlo_as_0118_mc_hessian_pdfas`` with lhaid ``325300`` if no scheme arg found !
 If you leave this out, the default will be set to ``$DEFAULT_PDF_SETS`` as shortcuts to have the PDF sets automatically and added to the ``run_card`` at run time to avoid specifying them directly
 ```
@@ -36,7 +37,17 @@ If you leave this out, the default will be set to ``$DEFAULT_PDF_SETS`` as short
 ```
 OR pass different ``--lhapdfsets`` with ``--lhaid``
 - ``--lhaid``: LHAID number , needed if you want to use different ``--lhapdfsets`` than the one mentionning above !
-
+Now in the dir cards the `blabla_param_card.dat` doesn't include the decay BR neither the total width for h3 and Z.
+You need to overwrite this card for each mass point to avoid madspin launch the automatic computation of the widths ! 
+Why you need to do that ? Because of these 2 open issue when using madspin [here](https://answers.launchpad.net/mg5amcnlo/+question/696286) and [here](https://answers.launchpad.net/mg5amcnlo/+question/696148)
+So Simply run as follow: 
+```bash 
+cd MG5_aMC_vX_X_X
+# compute the decay BR and width using fake ymb for all pdgid mentionned in the madspin card ! 
+./bin/mg5_aMC run_madwidths.sh
+# set the yukawa coupling to the mb on-shell 
+./run_yukawa_to_mbonshell.sh
+```
 ## GridPacks Generation:
 Inside the cards output directory (``example_cards`` or ``PrivateProd_run2``) a simple shell script is generated to produce all the gridpacks for each process.
 ```bash
@@ -55,7 +66,6 @@ ktmux(){
     fi
 }
 ```
-
 ## Computing decay rates for 2HDM with FeynRules and MadGraph5aMC@NLO :[arxiv.1402.1178](https://arxiv.org/pdf/1402.1178.pdf)
 ```python
 python prepare_paramcard.py --run_beforeYukawaFix --run_afterYukawaFix
