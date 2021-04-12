@@ -349,7 +349,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         outf.write('# - It should be run from the genproductions/bin/MadGraph5_aMCatNLO directory in a clean environment and will submit the gridpack generation for all points.\n')
         outf.write('# - each gridpack generation should take about 20 minutes\n')
         outf.write('set -x\n')
-        outf.write("GenDIR= 'genproductions'\n")
+        outf.write("GenDIR='genproductions'\n")
         outf.write('if [[ ! -d "$GenDIR" ]]; then\n')
         outf.write('    git clone  -o origin https://github.com/cms-sw/genproductions.git\n')
         outf.write('    git remote add upstream git@github.com:kjaffel/genproductions.git\n')
@@ -362,7 +362,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         outf.write('pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/\n')
         # Copy only the example cards for review  !
         if test:
-            outf.write("CardsDIR= 'HToZATo2L2B_ggfusion_b-associatedproduction'\n")
+            outf.write("CardsDIR='HToZATo2L2B_ggfusion_b-associatedproduction'\n")
             outf.write('if [[ ! -d "$CardsDIR" ]]; then\n')
             outf.write('    mkdir HToZATo2L2B_ggfusion_b-associatedproduction/\n')
             outf.write('fi\n')
@@ -427,12 +427,12 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
                 if not customizecards:
                     param_card_decayh2= './{}/{}_param_card.dat.decay_h2'.format(directory, cardname)
                     param_card_decayh3z= './{}/{}_param_card.dat.decay_h3z'.format(directory, cardname)
-
+                    template = os.path.join(templateDIR, filename("param_card", smpdetails, template=True))
                     # keep them seprate just because they're using different ymb in the param_card!
-                    prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb_H, carddir=directory, template=None, cardname='{}_param_card.dat.decay_h2'.format(cardname), pass_ymbandmb_toparamcards=True)
+                    prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb_H, carddir=directory, template=template, cardname='{}_param_card.dat.decay_h2'.format(cardname), pass_ymbandmb_toparamcards=True)
                     outf2.write('compute_widths 35 --path={} --output={} --body_decay=2\n'.format(param_card_decayh2, param_card_decayh2))
                      
-                    prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb_A, carddir=directory, template=None, cardname='{}_param_card.dat.decay_h3z'.format(cardname), pass_ymbandmb_toparamcards=True)
+                    prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb_A, carddir=directory, template=template, cardname='{}_param_card.dat.decay_h3z'.format(cardname), pass_ymbandmb_toparamcards=True)
                     outf2.write('compute_widths 23 36 --path={} --output={} --body_decay=2\n'.format(param_card_decayh3z, param_card_decayh3z))
                     outf3.write('python set_bottomYukawa_coupling_onshell.py --param_card1 {} --param_card2 {}\n'.format(param_card_decayh2, param_card_decayh3z))
                 #if fullsim:
