@@ -11,7 +11,7 @@ import logging
 LOG_LEVEL = logging.DEBUG
 stream = logging.StreamHandler()
 stream.setLevel(LOG_LEVEL)
-logger = logging.getLogger("ZA GridPack-PRODUCTION")
+logger = logging.getLogger("run2UL param_card for HToZATo2L2B")
 logger.setLevel(LOG_LEVEL)
 logger.addHandler(stream)
 try:
@@ -129,17 +129,19 @@ def call_BottomYukawacoupling(mh3=None, tanbeta=None, wh3tobb=None):
         logger.warning('will differs from the one in the banner by %d percent ' % (relative_diff*100))
     return ymb
 
-def prepare_param_cards(mH=None, mA=None, mh=None, mhc=None, MB=None, l2=None, l3=None, lR7=None, sinbma=None, tb=None, ymb=None, carddir=None, cardname=None, pass_ymbandmb_toparamcards=False):
-    with open(os.path.join('widths_crosschecks', 'template_param_card.dat'), 'r') as inf:
-        if carddir==None and cardname==None:
-            carddir = './widths_crosschecks/{}/inputs'.format('run_afterYukawaFix' if pass_ymbandmb_toparamcards else('run_beforeYukawaFix') )
-            cardname= "in_param_card_{}_{}_{}.dat".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
-            if not os.path.exists(carddir):
-                os.makedirs(carddir)
-        else:
-            if not os.path.exists(carddir):
-                os.makedirs(carddir)
-
+def prepare_param_cards(mH=None, mA=None, mh=None, mhc=None, MB=None, l2=None, l3=None, lR7=None, sinbma=None, tb=None, ymb=None, carddir=None, template=None, cardname=None, pass_ymbandmb_toparamcards=False):
+    
+    if carddir==None:
+        carddir = './widths_crosschecks/{}/inputs'.format('run_afterYukawaFix' if pass_ymbandmb_toparamcards else('run_beforeYukawaFix') )
+    if cardname==None:
+        cardname= "in_param_card_{}_{}_{}.dat".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
+    if template==None:
+        template= os.path.join('widths_crosschecks', 'template_param_card.dat')
+    
+    if not os.path.exists(carddir):
+        os.makedirs(carddir)
+        
+    with open(template, 'r') as inf:
         with open(os.path.join(carddir, cardname), 'w+') as outf:
             for line in inf:
                 # BLOCK MASS #
