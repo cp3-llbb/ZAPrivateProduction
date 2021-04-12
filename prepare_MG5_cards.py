@@ -37,6 +37,7 @@ try:
                 )
     stream.setFormatter(formatter)
 except ImportError:
+    # https://pypi.org/project/colorlog/
     pass
 
 if "CMSSW_BASE" not in os.environ:
@@ -105,7 +106,7 @@ def getLHAPDF(lhaid=None, lhapdfsets="DEFAULT", flavourscheme=None):
 
     return lhapdfsets, lhaid
 
-def Fix_Yukawa_sector(mh2=None, mh3=None, tanbeta=None, wh2tobb=None, wh3tobb=None, customizecards=False):
+def Fix_Yukawa_sector(mh2=None, mh3=None, tanbeta=None, sinbma=None, wh2tobb=None, wh3tobb=None, customizecards=False):
     """
         most of the sm values are changed in 2HDMC and sushi, to avoid having them in the customize_cards !!
         small difference won't make change, but I decided to keep them exactly the same 
@@ -114,35 +115,56 @@ def Fix_Yukawa_sector(mh2=None, mh3=None, tanbeta=None, wh2tobb=None, wh3tobb=No
         PartialDecay(h3 > bb ) = (3*mh3**2*tanbeta**2*TH3x3**2*ymb**2*math.sqrt(-4*MB**2*mh3**2 + mh3**4))/(8.*math.pi*vev**2*abs(mh3)**3)
         PartialDecay(h2 > bb~ ) = ((-12*MB**2*TH1x2**2*yb**2 + 3*mh2**2*TH1x2**2*yb**2 - (24*MB**2*tanbeta**2*TH2x2**2*ymb**2)/vev**2 + (6*mh2**2*tanbeta**2*TH2x2**2*ymb**2)/vev**2 - (24*MB**2*tanbeta*TH1x2*TH2x2*yb*ymb*math.sqrt(2))/vev + (6*mh2**2*tanbeta*TH1x2*TH2x2*yb*ymb*math.sqrt(2))/vev)*math.sqrt(-4*MB**2*mh2**2 + mh2**4))/(16.*math.pi*abs(mh2)**3)
     """
-    id =36 
-    MB = 4.75 # mb pole mass
     aEWM1= 127.9
     aEW = 1./aEWM1
     Gf = 1.166390e-05
 
+    MB = 4.75 # mb pole mass
     MZ= 9.118760e+01
     MW= math.sqrt(MZ**2/2. + math.sqrt(MZ**4/4. - (aEW*math.pi*MZ**2)/(Gf*math.sqrt(2))))
 
     ee = 2*math.sqrt(aEW)*math.sqrt(math.pi)
     sw2 = 1 - MW**2/MZ**2
     sw = math.sqrt(sw2)
-
     vev = (2*MW*sw)/ee
+    
+    TH1x1 = sinbma
+    TH1x2 = math.sqrt(1 - sinbma**2)
+    TH2x1 = -math.sqrt(1 - sinbma**2)
+    TH2x2 = sinbma
     TH3x3 = 1.
-    const2 = (8.*math.pi*vev**2*abs(mh3)**3)
-    const1 = (3*mh3**2*tanbeta**2*TH3x3**2*math.sqrt(-4*MB**2*mh3**2 + mh3**4))
+    
+    const1_A = (3*mh3**2*tanbeta**2*TH3x3**2*math.sqrt(-4*MB**2*mh3**2 + mh3**4))
+    const2_A = (8.*math.pi*vev**2*abs(mh3)**3)
 
-    ymb = math.sqrt((const2 * wh3tobb)/const1)
-    yb = ((ymb*math.sqrt(2))/vev)
+    ymb_A = math.sqrt((const2_A * wh3tobb)/const1_A)
+    yb_A = ((ymb_A*math.sqrt(2))/vev)
 
-    recalculated_width= (MB**2 *const1)/const2
-    width_in_the_banner = wh3tobb
-    relative_diff=abs(recalculated_width-width_in_the_banner)/recalculated_width
+    const1_H = (2*(-12*MB**2*TH1x2**2 + 3*mh2**2*TH1x2**2)/(vev**2))
+    const2_H = ((24*MB**2*tanbeta**2*TH2x2**2)/vev**2)
+    const3_H = ((6*mh2**2*tanbeta**2*TH2x2**2)/vev**2)
+    const4_H = (((math.sqrt(2))/vev )*((24*MB**2*tanbeta*TH1x2*TH2x2*math.sqrt(2))/vev))
+    const5_H = (((math.sqrt(2))/vev)*((6*mh2**2*tanbeta*TH1x2*TH2x2*math.sqrt(2))/vev ))
+    const6_H = math.sqrt(-4*MB**2*mh2**2 + mh2**4)
+    const7_H = (16.*math.pi*abs(mh2)**3)
+
+    ymb_H= math.sqrt(((const7_H * wh2tobb ) /(const6_H *(const1_H - const2_H + const3_H - const4_H + const5_H))))
+    yb_H = ((ymb_H*math.sqrt(2))/vev)
+
+    recalculated_width_A= (MB**2 *const1_A)/const2_A
+    width_in_the_banner_A = wh3tobb
+    relative_diff_A=abs(recalculated_width_A-width_in_the_banner_A)/recalculated_width_A
+
+    recalculated_width_H = (ymb_H**2*(const1_H - const2_H + const3_H - const4_H + const5_H )*const6_H )/const7_H
+    width_in_the_banner_H = wh2tobb
+    relative_diff_H=abs(recalculated_width_H-width_in_the_banner_H)/recalculated_width_H
+    
     if customizecards:
-        if (relative_diff > 0.05):
-            logger.critical('The LO estimate for the width of particle %s ' % id)
-            logger.critical('will differs from the one in the banner by %d percent if you do not pass the param_card and you pass the customized cards instead' % (relative_diff*100))
-    return ymb 
+        for id, diff in zip([36, 35], [relative_diff_A, relative_diff_H]):
+            if (diff > 0.05):
+                logger.critical('The LO estimate for the width of particle %s ' % id)
+                logger.critical('will differs from the one in the banner by %d percent if you do not pass the param_card and you pass the customized cards instead' % (diff*100))
+    return ymb_H, ymb_A 
 
 def compute_widths_BR_and_lambdas(mH, mA, mh, tb, pdfName="DEFAULT", saveprocessinfos=False):
     xsec_ggH = 0.
@@ -366,7 +388,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
                 os.remove(datasetName_xsc_file)
             f= open(datasetName_xsc_file,"a")
             precision =("NNLO" if process=='bbH' else"NLO")
-            f.write('DatasetName  Sushi_xsc@%sprecision[pb]  Sushi_xsc_err[pb]  BR(H -> ZA )  BR( A -> bb)  Yukawa_coupling(bottom)[GeV]  Partial_width(A ->bb)[GeV]\n'%precision)
+            f.write('DatasetName  Sushi_xsc@%sprecision[pb]  Sushi_xsc_err[pb]  BR(H -> ZA )  BR( A -> bb)  Ymb,H[GeV]  Ymb,a [GeV]  Partial_width(A ->bb)[GeV]\n'%precision)
         
         for H, A in griddata:
             mH = float_to_mass(H)
@@ -380,14 +402,15 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
             #    continue
             for tb in tb_list:
                 wH, wA, wh2tobb, wh3tobb, l2, l3, lR7, sinbma, tb, xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH, HtoZABR, AtobbBR = compute_widths_BR_and_lambdas(mH, mA, mh, tb, pdfName=pdfName, saveprocessinfos=saveprocessinfos)
-                ymb = Fix_Yukawa_sector(H, A, tb, wh2tobb, wh3tobb, customizecards)
-                prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lhaid, smpdetails, templateDIR, outputDIR, customizecards)
+                ymb_H, ymb_A = Fix_Yukawa_sector(H, A, tb, sinbma, wh2tobb, wh3tobb, customizecards)
+                print( ymb_H, ymb_A , ymb_H/ymb_A)
+                prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb_A, lhaid, smpdetails, templateDIR, outputDIR, customizecards)
 
                 cardname = "HToZATo2L2B_{}_{}_{}_{}".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
                 if saveprocessinfos:
                     xsc = (xsec_ggH if process=='ggH' else(xsec_bbH))
                     err = (err_integration_ggH if process=='ggH' else( err_integration_bbH))
-                    f.write('{} {} {} {} {} {} {}\n'.format(cardname, xsc ,err, HtoZABR, AtobbBR, ymb, wh3tobb))
+                    f.write('{} {} {} {} {} {} {} {}\n'.format(cardname, xsc ,err, HtoZABR, AtobbBR, ymb_H, ymb_A, wh3tobb))
                 loc = ('HToZATo2L2B_ggfusion_b-associatedproduction/example_cards' if test else ('PrivateProd_run2') )
                 carddir ="cards/production/13TeV/{}/{}".format(loc, cardname)
                 workqueue='{}'.format(queue)
@@ -402,10 +425,16 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
                 process_name = 'HToZATo2L2B_{}_{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string( tb), smpdetails)
                 directory = '{}/'.format(outputDIR) + process_name
                 if not customizecards:
-                    prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb, carddir=directory, cardname='{}_param_card.dat.backup'.format(cardname), pass_ymbandmb_toparamcards=True)
-                    param_card= './{}/{}_param_card.dat.backup'.format(directory, cardname)
-                    outf2.write('compute_widths 36 23 --path={} --output={} --body_decay=2\n'.format(param_card, param_card))
-                    outf3.write('python set_bottomYukawa_coupling_onshell.py --backup_card {}\n'.format(param_card))
+                    param_card_decayh2= './{}/{}_param_card.dat.decay_h2'.format(directory, cardname)
+                    param_card_decayh3z= './{}/{}_param_card.dat.decay_h3z'.format(directory, cardname)
+
+                    # keep them seprate just because they're using different ymb in the param_card!
+                    prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb_H, carddir=directory, template=None, cardname='{}_param_card.dat.decay_h2'.format(cardname), pass_ymbandmb_toparamcards=True)
+                    outf2.write('compute_widths 35 --path={} --output={} --body_decay=2\n'.format(param_card_decayh2, param_card_decayh2))
+                     
+                    prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb_A, carddir=directory, template=None, cardname='{}_param_card.dat.decay_h3z'.format(cardname), pass_ymbandmb_toparamcards=True)
+                    outf2.write('compute_widths 23 36 --path={} --output={} --body_decay=2\n'.format(param_card_decayh3z, param_card_decayh3z))
+                    outf3.write('python set_bottomYukawa_coupling_onshell.py --param_card1 {} --param_card2 {}\n'.format(param_card_decayh2, param_card_decayh3z))
                 #if fullsim:
                 #    outf.write('mv {}* /afs/cern.ch/user/k/kjaffel/public/HToZATo2L2B_run2gridpacks/\n'.format(cardname))
         
@@ -425,7 +454,10 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
     os.chmod('run_madwidths.sh', os.stat('run_madwidths.sh').st_mode | stat.S_IXUSR)
     os.chmod('run_yukawa_to_mbonshell.sh', os.stat('run_yukawa_to_mbonshell.sh').st_mode | stat.S_IXUSR)
     if not customizecards:
-        logger.warning(' Please run_madwidths.sh to overwrite your param_card before you lunch your gridpack generations !')
+        logger.warning(' Please run_madwidths.sh to overwrite the param_card before you lunch your gridpack generations !')
+        logger.warning('cd MG5_aMC_vX_X_X')
+        logger.warning('./bin/mg_aMC run_madwidths.sh')
+        logger.warning('./run_yukawa_to_mbonshell.sh')
     print ('All commands prepared in ./prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()))
 
 if __name__ == '__main__':
