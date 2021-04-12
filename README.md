@@ -19,6 +19,8 @@ cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo
 ```python
 # run a test
 ./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards
+# run all ZA run2 UL mass points 
+./prepare_MG5_cards.py --process bbH --templates run2Template_cards --queue condor_spool -s 4FS -pdf NNPDF31
 ```
 - ``-p``/``process``: bbH or ggH
 - ``-q``/``--queue``: condor, condor_spool, slurm or 1nh 
@@ -47,6 +49,27 @@ cd MG5_aMC_vX_X_X
 ./bin/mg5_aMC run_madwidths.sh
 # set the yukawa coupling to the mb on-shell 
 ./run_yukawa_to_mbonshell.sh
+```
+## Cards Parsing First :
+The code live inside ``genproductions/bin/MadGraph5_aMCatNLO/Utilities/parsing_code`` dir .
+The goal of the parsed code is the syntactic analysis of the Madgraph cards to check:
+- The cards's right structure.
+- Wrong objects definition.
+- Possible bugs.
+Proc card checks:
+- Only one proton definition is permitted
+- The correct pdf-set used in the run card. 
+- The add-process line must contain generate line. The possible jet must be defined.
+- The model line must be defined.
+- The card must include output line with correct.
+Inside the Run card:
+- 13 TeV energy of collision.
+- Declaration of nevents
+- If ickkw=1 checks if the jets are in the process
+- No double declaration of pfd number.
+
+```python
+python parsing.py name-of-cards
 ```
 ## GridPacks Generation:
 Inside the cards output directory (``example_cards`` or ``PrivateProd_run2``) a simple shell script is generated to produce all the gridpacks for each process.
