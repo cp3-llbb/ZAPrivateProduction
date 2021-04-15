@@ -9,7 +9,6 @@ import stat
 import numpy as np
 import argparse, optparse
 from cp3_llbb.Calculators42HDM.Calc2HDM import *
-from prepare_paramcard import prepare_param_cards
 
 import logging
 LOG_LEVEL = logging.DEBUG
@@ -195,10 +194,11 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb, pdfName="DEFAULT", saveprocess
     cwd = os.getcwd()
     #os.chdir(os.path.join(CMSSW_Calculators42HDM, 'out'))
     os.chdir(CMSSW_Calculators42HDM)
-    
+    muR = mH/2
+    muF = muR
     res = Calc2HDM(mode = mode, sqrts = sqrts, type = type,
                    tb = tb, m12 = m12, mh = mh, mH = mH, mA = mA, mhc = mhc, sba = sinbma,
-                   outputFile = outputFile, muR = 9.118800e+01, muF = 9.118800e+01)
+                   outputFile = outputFile, muR =muR, muF =muF)
     # A PDF is used, so alpha_s(MZ) is going to be modifie
     # I set the lhapdf to NNPDF31_nnlo_as_0118_nf_4_mc_hessian because it's the same lhapdf used in the default seeting by the genproductions
     # make sure to change it If you're planing to use 5FS PDFSETS !!
@@ -230,6 +230,53 @@ def filename(suffix, smpdetails=None, template=False, mH=None, mA=None, tb=None)
         masses = '{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string( tb))
         cardName = 'HToZATo2L2B_' + masses + '_' + smpdetails +'/HToZATo2L2B_' + masses + '_' + smpdetails+ '_' + suffix +'.dat'
     return cardName
+
+
+def prepare_param_cards(mH=None, mA=None, mh=None, mhc=None, MB=None, l2=None, l3=None, lR7=None, sinbma=None, tb=None, ymb=None, carddir=None, template=None, cardname=None, pass_ymbandmb_toparamcards=False):
+    
+    if carddir==None:
+        carddir = './widths_crosschecks/{}/inputs'.format('run_afterYukawaFix' if pass_ymbandmb_toparamcards else('run_beforeYukawaFix') )
+    if cardname==None:
+        cardname= "in_param_card_{}_{}_{}.dat".format(mass_to_string(mH), mass_to_string(mA), mass_to_string(tb))
+    if template==None:
+        template= os.path.join('widths_crosschecks', 'template_param_card.dat')
+    
+    if not os.path.exists(carddir):
+        os.makedirs(carddir)
+        
+    with open(template, 'r') as inf:
+        with open(os.path.join(carddir, cardname), 'w+') as outf:
+            for line in inf:
+                # BLOCK MASS #
+                if " MB " in line and pass_ymbandmb_toparamcards:
+                    outf.write('    5 {:.6f}   # MB\n'.format(MB))
+                elif "mhc" in line and pass_ymbandmb_toparamcards:
+                    outf.write('   37 {:.6f}   # mhc\n'.format(mhc))
+                # BLOCK YUKAWA # 
+                elif "ymb" in line and pass_ymbandmb_toparamcards:
+                    outf.write('    5 {:.8f}   # ymb\n'.format(ymb))
+                # BLOCK FRBLOCK # 
+                elif "tanbeta" in line:
+                    outf.write('    1 {:.6f}   # tanbeta\n'.format(tb))
+                elif "sinbma" in line:
+                    outf.write('    2 {:.8f}   # sinbma\n'.format(sinbma))
+                # BLOCK HIGGS # 
+                elif "l2" in line:
+                    outf.write('    1 {:.6f}   # l2\n'.format(l2))
+                elif "l3" in line:
+                    outf.write('    2 {:.6f}   # l3\n'.format(l3))
+                elif "lR7" in line:
+                    outf.write('    3 {:.6f}   # lR7\n'.format(lR7))
+                # BLOCK MASS #
+                elif "mh1" in line:
+                    outf.write('   25 {:.6f}   # mh1\n'.format(mh))
+                elif "mh2" in line:
+                    outf.write('   35 {:.6f}   # mh2\n'.format(mH))
+                elif "mh3" in line:
+                    outf.write('   36 {:.6f}   # mh3\n'.format(mA))
+                else:
+                    outf.write(line)
+    return
 
 def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lhaid, smpdetails, templateDIR, outputDIR, customizecards):
     process_name = 'HToZATo2L2B_{}_{}_{}_{}'.format(mass_to_string(mH), mass_to_string(mA), mass_to_string( tb), smpdetails)
