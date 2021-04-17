@@ -123,15 +123,18 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                     if "ymb" in line2:
                         outf.write('    5 {:.6e}   # ymb\n'.format(4.75))
                     elif inf2h3_mode ==1:
-                        if tb =="1p50" and "DECAY  36" not in line2:
-                            try:
-                                ID1=line2.split()[2]
-                                ID2=line2.split()[3]
-                                line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
-                                print( '--'*60)
-                                outf.write(line2_modf)
-                            except:
-                                outf.write(line2)
+                        if tb =="1p50":
+                            if "DECAY  36" not in line2:
+                                try:
+                                    ID1=line2.split()[2]
+                                    ID2=line2.split()[3]
+                                    line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
+                                    print( '--'*60)
+                                    outf.write(line2_modf)
+                                except:
+                                    outf.write(line2)
+                        else:
+                            outf.write(line2)
                     elif "DECAY  35" in line2:
                         with open(param_card1, 'r') as inf1:
                             ID1_ =None
@@ -166,8 +169,8 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                         outf.write(line2)
                     
         # there will be no need for these cards 
-        #os.remove(param_card1)
-        #os.remove(param_card2)
+        os.remove(param_card1)
+        os.remove(param_card2)
         print ( "{} successfully overwritten with h2 h3 and Z decay width and BR!".format(param_card) ) 
     else:
         logger.error(" param_card with h2 decay OR param_card with h3 and Z decay is missing, please run ./bin/mg5_aMC run_madwidths.sh from MG5_aMC_vX_X_X first !")
