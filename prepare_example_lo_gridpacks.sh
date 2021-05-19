@@ -3,7 +3,7 @@
 # - It should be run from the genproductions/bin/MadGraph5_aMCatNLO directory in a clean environment and will submit the gridpack generation for all points.
 # - each gridpack generation should take about 20 minutes
 set -x
-GenDIR= 'genproductions'
+GenDIR='genproductions'
 if [[ ! -d "$GenDIR" ]]; then
     git clone  -o origin https://github.com/cms-sw/genproductions.git
     git remote add upstream git@github.com:kjaffel/genproductions.git
@@ -12,7 +12,7 @@ pushd genproductions
 git checkout master
 git pull
 pushd bin/MadGraph5_aMCatNLO/cards/production/13TeV/
-CardsDIR= 'HToZATo2L2B_ggfusion_b-associatedproduction'
+CardsDIR='HToZATo2L2B_ggfusion_b-associatedproduction'
 if [[ ! -d "$CardsDIR" ]]; then
     mkdir HToZATo2L2B_ggfusion_b-associatedproduction/
 fi
