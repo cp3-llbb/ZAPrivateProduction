@@ -2,6 +2,8 @@ import os, os.path
 import argparse, optparse
 import shutil
 import logging
+import math
+
 LOG_LEVEL = logging.DEBUG
 stream = logging.StreamHandler()
 stream.setLevel(LOG_LEVEL)
@@ -32,14 +34,23 @@ except ImportError:
     # https://pypi.org/project/colorlog/
     pass
 
+def string_to_mass(s):
+    m = float(s.replace('p', '.'))
+    return m
+
 def getcardsParams(cardname=None):
     split_cardname = cardname.split('/')
     split_cardname = split_cardname[-1]
     split_cardname = split_cardname.split('_')
-    mh2 = split_cardname[1]
-    mh3 = split_cardname[2]
+    mode = 'A' if 'AToZHTo2L2B'in split_cardname else('H')
+    if mode == 'H':
+        mh2 = split_cardname[1]
+        mh3 = split_cardname[2]
+    else:
+        mh3 = split_cardname[1]
+        mh2 = split_cardname[2]
     tb = split_cardname[3].replace('.dat','')
-    return mh2, mh3, tb
+    return mh2, mh3, tb, mode
 
 def getPDGID(pdgid=None):
     dicts = {'h': 25, 'H':35, 'A':36, 'H+':37, 'H-':37, 'Z':23, 'b':5, 't':6, 'c': 4, 's':3, 'e':11, 've':12, 'mu':13, 'vm':14,'ta':15, 'vt':16, 'g':21, 'ga':22, 'W+':24, 'W-':-24, }
@@ -50,22 +61,31 @@ def getPDGID(pdgid=None):
         key = dicts_flipped[-int(pdgid)]
     return key
 
+def getSushi_mbMSscheme(cardname=None):
+    with open(os.path.join(CMSSW_Calculators42HDM, 'Scan/NNPDF31_nnlo_as_0118_nf_4_mc_hessian', cardname), 'r') as f:
+        for line in f:
+            if '# m_b for bottom Yukawa' not in line:
+                continue
+            mb_MSscheme_muR = line.split()[1]
+    return mb_MSscheme_muR
+
 def getTHDMprecisions(line = None, motherParticle= None, ID1= None, ID2= None, cardname = None, gettotal_width=False):
     with open(os.path.join(CMSSW_Calculators42HDM, cardname), 'r') as f:
         thdmc_BR = 0.
         thdmc_partialwidth = 0.
         thdmc_totalwidth = 0.
-        mode = {'A':0, 'H':0}
+        mode = {'A':0, 'H':0, 'H+':0}
         for line_ in f:
             if gettotal_width:
-                if 'Decay table for {} '.format(motherParticle) not in line_ :
+                suffix =('' if motherParticle =='H+' else (' ') )
+                if 'Decay table for {}{}'.format(motherParticle, suffix) not in line_ :
                     continue
                 mode[motherParticle] = 1
                 nextLine = next(f)
                 if 'Total width:' in nextLine and mode[motherParticle] ==1:
                     thdmc_totalwidth = float(nextLine.split()[2])
             else:
-                if '{}  -> {} {}'.format(motherParticle, getPDGID(ID1), getPDGID(ID2)) not in line_ and '{}  -> {} {}'.format(motherParticle, getPDGID(ID2), getPDGID(ID1)) not in line_ and '{}  -> {}  {}'.format(motherParticle, getPDGID(ID1), getPDGID(ID2)) not in line_ and '{}  -> {}  {}'.format(motherParticle, getPDGID(ID2), getPDGID(ID1)) not in line_:
+                if '{}  -> {} {}'.format(motherParticle, getPDGID(ID1), getPDGID(ID2)) not in line_ and '{}  -> {} {}'.format(motherParticle, getPDGID(ID2), getPDGID(ID1)) not in line_ and '{}  -> {}  {}'.format(motherParticle, getPDGID(ID1), getPDGID(ID2)) not in line_ and '{}  -> {}  {}'.format(motherParticle, getPDGID(ID2), getPDGID(ID1)) not in line_ and '{} -> {}  {}'.format(motherParticle, getPDGID(ID1), getPDGID(ID2)) not in line_ and '{} -> {}  {}'.format(motherParticle, getPDGID(ID2), getPDGID(ID1)) not in line_ and '{} -> {} {}'.format(motherParticle, getPDGID(ID1), getPDGID(ID2)) not in line_ and '{} -> {} {}'.format(motherParticle, getPDGID(ID2), getPDGID(ID1)) not in line_ :
                     continue
                 print( 'IDS:', ID1, getPDGID(ID1), ID2, getPDGID(ID2) )
                 print('thdmc:', line_)
@@ -82,7 +102,7 @@ def getTHDMprecisions(line = None, motherParticle= None, ID1= None, ID2= None, c
         #  BR             NDA  ID1    ID2   ...
         9.095862e-01   2    36  23 # 210.920572285
         """
-        pdgid = (35 if motherParticle== 'H' else( 36 if motherParticle== 'A' else (logger.error(' you are not suppose to change the decay of : {}'.format(motherParticle)))))
+        pdgid = (35 if motherParticle== 'H' else( 36 if motherParticle== 'A' else (37 if motherParticle== 'H+' else(logger.error(' you are not suppose to change the decay of : {}'.format(motherParticle))))))
         if gettotal_width:
             newline = 'DECAY  {}   {:.6e}\n'.format(pdgid, thdmc_totalwidth)
         else:
@@ -98,8 +118,34 @@ def getTHDMprecisions(line = None, motherParticle= None, ID1= None, ID2= None, c
 def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
     
     param_card = param_card1.replace('.decay_h2', '')
-    mh2, mh3, tb = getcardsParams(param_card)
-    cardname="madgraphInputs_mH-{}_mA-{}_tb-{}.log".format(mh2, mh3, tb)
+    mh2, mh3, tb, mode = getcardsParams(param_card)
+    cardname="madgraphInputs_mH-{}_mA-{}_tb-{}_mode{}.log".format(mh2, mh3, tb, mode)
+    process =( 'bbH' if tb =='20p00' else('ggH'))
+    
+    aEWM1= 127.9
+    aEW = 1./aEWM1
+    Gf = 1.166390e-05
+
+    mb = 4.92 # mb(OS) pole mass
+    mb__tilde__ = 4.92 # mb~
+    mt = 1.725000e+02
+    MZ= 9.118760e+01
+    MW= math.sqrt(MZ**2/2. + math.sqrt(MZ**4/4. - (aEW*math.pi*MZ**2)/(Gf*math.sqrt(2))))
+    
+    ee = 2.*math.sqrt(aEW)*math.sqrt(math.pi)
+    sw2 = 1. - MW**2/MZ**2
+    sw = math.sqrt(sw2)
+    vev = (2.*MW*sw)/ee
+    CF = 4./3.
+    alpha_s = 1.180000e-01 # FIXME alphas_muR
+    
+    ymt = 1.725000e+02
+    ymb = 4.18 #m_b(m_b), MSbar FIXME m_b(mu_R), MSbar
+    
+    if process == 'bbH':
+        mu_R = (string_to_mass(mh3) + MZ + mb + mb__tilde__)/4.
+    elif process == 'ggH': # page 40 ; https://arxiv.org/pdf/1610.07922.pdf
+        mu_R = string_to_mass(mh2)/2.
     
     if os.path.exists( param_card):
         os.remove(param_card)
@@ -110,20 +156,40 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                 ID2 =None
                 inf2h2_mode = 0
                 inf2h3_mode = 0
+                inf2hc_mode = 0
                 for line2 in inf2:
                     if "DECAY  35" in line2:
                         inf2h2_mode = 1
                         inf2h3_mode = 0
+                        inf2hc_mode = 0
                     elif "DECAY  36" in line2:
                         inf2h2_mode = 0
                         inf2h3_mode = 1
+                        inf2hc_mode = 0
                         if tb =="1p50":
                             line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
-                            outf.write(line2_modf)    
+                            outf.write(line2_modf)
+                    elif "DECAY  37" in line2:
+                        inf2h2_mode = 0
+                        inf2h3_mode = 0
+                        inf2hc_mode = 1
+                        line2_modf =getTHDMprecisions(line=line2, motherParticle='H+', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
+                        outf.write(line2_modf)
                     if "ymb" in line2:
-                        outf.write('    5 {:.6e}   # ymb\n'.format(4.75))
+                        # FIXME YOU HAVE TO DO IT RIGHT FOR THIS PROCESS , Yukawa CAN'T BE THIS WAY
+                        #if process == 'bbH': # pp > h2 > h3 Z b b~ 
+                            # https://arxiv.org/pdf/1808.01660.pdf eq 2.5 
+                            # https://arxiv.org/pdf/1610.07922.pdf page 523 
+                        #    yb_SM= math.sqrt(2) *ymb /vev
+                        #    yt = math.sqrt(2) *ymt /vev
+                        #    yb_HEFT = yb_SM + yt* (pow(alpha_s,2)/pow(math.pi,2) )* (mb/mt)*CF*((5./24.) - (1./4.)*math.log(pow(mu_R,2)/pow(mt,2)))
+                        #    ymb_HEFT = (yb_HEFT * vev )/math.sqrt(2)
+                        #    outf.write('    5 {}   # ymb MSbar(muR)\n'.format(ymb_HEFT))
+                        #    print( ymb_HEFT)
+                        #else:
+                        outf.write('    5 {:.8e}   # ymb\n'.format(ymb))
                     elif inf2h3_mode ==1:
-                        if tb =="1p50":
+                        if process == 'ggH':
                             if "DECAY  36" not in line2:
                                 try:
                                     ID1=line2.split()[2]
@@ -135,25 +201,39 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                     outf.write(line2)
                         else:
                             outf.write(line2)
+                    elif inf2hc_mode ==1:
+                        if "DECAY  37" not in line2:
+                            try:
+                                ID1=line2.split()[2]
+                                ID2=line2.split()[3]
+                                line2_modf =getTHDMprecisions(line=line2, motherParticle='H+', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
+                                print( '--'*60)
+                                outf.write(line2_modf)
+                            except:
+                                outf.write(line2)
+
                     elif "DECAY  35" in line2:
                         with open(param_card1, 'r') as inf1:
                             ID1_ =None
                             ID2_ =None
                             inf1h2_mode = 0
                             inf1h3_mode = 0
+                            inf1hc_mode = 0
                             for line1 in inf1:
                                 if "DECAY  35" in line1:
                                     inf1h2_mode = 1
                                     inf1h3_mode = 0
-                                    if tb =="1p50":
+                                    inf1hc_mode = 0
+                                    if process == 'ggH':
                                         line1_modf =getTHDMprecisions(line=line1, motherParticle='H', ID1=None, ID2=None, cardname=cardname, gettotal_width=True) 
                                         outf.write(line1_modf)
                                 elif "DECAY  36" in line1:
                                     inf1h2_mode = 0
                                     inf1h3_mode = 1
+                                    inf1hc_mode = 0
                                 
                                 if inf1h2_mode == 1:
-                                    if tb =="1p50":
+                                    if process == 'ggH':
                                         if "DECAY  35" not in line1:
                                             try:
                                                 ID1_=line1.split()[2]
