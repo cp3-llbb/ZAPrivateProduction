@@ -34,7 +34,7 @@ except ImportError:
     print(" You can add colours to the output of Python logging module via : https://pypi.org/project/colorlog/")
     pass
 
-def get_keys_from_value(d, val):
+def get_keys_from_value(d=None, val=None):
     return [k for k, v in d.items() if v == val]
 
 def string_to_mass(s):
@@ -203,7 +203,7 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                     ID1=line2.split()[2]
                                     ID2=line2.split()[3]
                                     line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
-                                    branching_ratios['36']['{}  {}'.format(ID1,ID2)]=float(line1_modf.split()[0])          
+                                    branching_ratios['36']['{}  {}'.format(ID1,ID2)]=float(line2_modf.split()[0])          
                                     print( '--'*60)
                                     outf.write(line2_modf)
                                 except:
@@ -253,20 +253,20 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                                 outf.write(line1_modf)
                                             except:
                                                 outf.write(line1)
-                                    else:
+                                    else: # WHY FIXME
                                         outf.write(line1)
                     else:
                         outf.write(line2)
                 for particle in ['35', '36']:
+                    print( particle, branching_ratios[particle])
                     channel_with_max_BR = max(branching_ratios[particle], key=branching_ratios[particle].get)
+                    val = sorted(list(branching_ratios[particle].values()))
                     if channel_with_max_BR not in ['5  -5', '-5  5', '23  35', '35  23', '36  23', '23  36']:
-                        logger.critical("** You need to be careful, seems to be {} is the main channel that contribute to the total width of : {} ** ".format(channel_with_max_BR, particle))
-                        logger.critical(" BR:  {} -> {}  = {}".format(particle, channel_with_max_BR, branching_ratios[particle][channel_with_max_BR]))
-                        val = list(branching_ratios[particle].values())
-                        val.sort()
-                        for i in range(4):
-                            res = val[-i]
-                            logger.critical("{}. BR:  {} -> {}  = {} ".format(i, particle, get_keys_from_value(branching_ratios[particle], res),res))
+                        logger.critical("** You need to be careful, seems to be [{}] is the main channel that contribute to the total width of : {} ** ".format(channel_with_max_BR, particle))
+                        logger.critical(" BR:  {} -> [{}] = {}".format(particle, channel_with_max_BR, branching_ratios[particle][channel_with_max_BR]))
+                        for i in [-2, -3]:
+                            res = val[i]
+                            logger.critical(".{}.contribution. BR:  {} -> {}  = {} ".format(abs(i), particle, get_keys_from_value(branching_ratios[particle], res),res))
         # there will be no need for these cards 
         #os.remove(param_card1)
         #os.remove(param_card2)
