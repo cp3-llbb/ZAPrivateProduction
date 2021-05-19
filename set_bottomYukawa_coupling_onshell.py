@@ -3,7 +3,7 @@ import argparse, optparse
 import shutil
 import logging
 import math
-
+import collections
 LOG_LEVEL = logging.DEBUG
 stream = logging.StreamHandler()
 stream.setLevel(LOG_LEVEL)
@@ -31,8 +31,11 @@ try:
                 )
     stream.setFormatter(formatter)
 except ImportError:
-    # https://pypi.org/project/colorlog/
+    print(" You can add colours to the output of Python logging module via : https://pypi.org/project/colorlog/")
     pass
+
+def get_keys_from_value(d, val):
+    return [k for k, v in d.items() if v == val]
 
 def string_to_mass(s):
     m = float(s.replace('p', '.'))
@@ -105,14 +108,18 @@ def getTHDMprecisions(line = None, motherParticle= None, ID1= None, ID2= None, c
         pdgid = (35 if motherParticle== 'H' else( 36 if motherParticle== 'A' else (37 if motherParticle== 'H+' else(logger.error(' you are not suppose to change the decay of : {}'.format(motherParticle))))))
         if gettotal_width:
             newline = 'DECAY  {}   {:.6e}\n'.format(pdgid, thdmc_totalwidth)
+            relative_diff = abs((float(line.split()[-1]) - thdmc_totalwidth )/float(line.split()[-1]))
+            if (relative_diff > 0.05 ):
+                logger.critical('The LO estimate for the width of particle %s ' % pdgid)
+                logger.critical('will differs from the one in the banner by %s percent' % (relative_diff*100))
         else:
             newline = '   {:.6e}   2    {}  {} # {:.11e}\n'.format(thdmc_BR, ID1, ID2, thdmc_partialwidth)
             if thdmc_BR == 0. or thdmc_partialwidth == 0. :
-                logger.warning( 'THDMC does not include {} -> {} {} decay , the one from madspin will be kept'.format(motherParticle, ID1, ID2))
+                logger.warning( '2HDMCalculator does not include {} -> {} {} decay , the one from MadWidth will be kept'.format(motherParticle, ID1, ID2))
                 logger.warning( line )
                 newline =line
-        print( 'old:', line)
-        print( 'new:', newline )
+        print( 'MadWidth:', line)
+        print( '2HDMCalculator:', newline )
     return newline
 
 def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
@@ -150,6 +157,7 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
     if os.path.exists( param_card):
         os.remove(param_card)
     if os.path.exists( param_card1) and os.path.exists( param_card2): 
+        branching_ratios = collections.defaultdict(dict)
         with open(param_card2, 'r') as inf2:
             with open(param_card, 'w+') as outf:
                 ID1 =None
@@ -195,6 +203,7 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                     ID1=line2.split()[2]
                                     ID2=line2.split()[3]
                                     line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
+                                    branching_ratios['36']['{}  {}'.format(ID1,ID2)]=float(line1_modf.split()[0])          
                                     print( '--'*60)
                                     outf.write(line2_modf)
                                 except:
@@ -239,6 +248,7 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                                 ID1_=line1.split()[2]
                                                 ID2_=line1.split()[3]
                                                 line1_modf =getTHDMprecisions(line=line1, motherParticle='H', ID1=ID1_, ID2=ID2_, cardname=cardname, gettotal_width=False) 
+                                                branching_ratios['35']['{}  {}'.format(ID1_,ID2_)]=float(line1_modf.split()[0])       
                                                 print( '--'*60)
                                                 outf.write(line1_modf)
                                             except:
@@ -247,13 +257,22 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                         outf.write(line1)
                     else:
                         outf.write(line2)
-                    
+                for particle in ['35', '36']:
+                    channel_with_max_BR = max(branching_ratios[particle], key=branching_ratios[particle].get)
+                    if channel_with_max_BR not in ['5  -5', '-5  5', '23  35', '35  23', '36  23', '23  36']:
+                        logger.critical("** You need to be careful, seems to be {} is the main channel that contribute to the total width of : {} ** ".format(channel_with_max_BR, particle))
+                        logger.critical(" BR:  {} -> {}  = {}".format(particle, channel_with_max_BR, branching_ratios[particle][channel_with_max_BR]))
+                        val = list(branching_ratios[particle].values())
+                        val.sort()
+                        for i in range(4):
+                            res = val[-i]
+                            logger.critical("{}. BR:  {} -> {}  = {} ".format(i, particle, get_keys_from_value(branching_ratios[particle], res),res))
         # there will be no need for these cards 
-        os.remove(param_card1)
-        os.remove(param_card2)
-        print ( "{} successfully overwritten with h2 h3 and Z decay width and BR!".format(param_card) ) 
+        #os.remove(param_card1)
+        #os.remove(param_card2)
+        print ( "{} successfully overwritten with 35 36 37 and 23 decay widths and branching ratios!".format(param_card) ) 
     else:
-        logger.error(" param_card with h2 decay OR param_card with h3 and Z decay is missing, please run ./bin/mg5_aMC run_madwidths.sh from MG5_aMC_vX_X_X first !")
+        logger.error(" XXX_param_card.dat with h2 decay OR XXX_param_card.dat with h3 and Z decay is missing, please run prepare_MG5_cards.py and then ./bin/mg5_aMC run_madwidths.sh from MG5_aMC_vX_X_X first !")
     return
 
 if __name__ == '__main__':
