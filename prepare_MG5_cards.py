@@ -49,9 +49,9 @@ def which_points(fullsim=False, benchmarks=False, test=False, dataDir="./data"):
     grid['example_card'] = [
         ( 500, 300),]
     grid['benchmarks'] = [
-        ( 200, 125), (250, 200), # low mass -boosted region
-        ( 500, 300),             # resolved
-        (1000, 500), (800, 700)] # forward
+        ( 500, 250), ( 240, 130), # low mass -boosted region
+        ( 500, 300), ( 550, 300), ( 670, 500), # resolved region 
+        ( 780, 680), ( 700, 200), ( 800, 140)] # forward region
     grid['fullsim'] = [
         #(MH, MA)
         ( 200, 50), ( 200, 100),
@@ -376,7 +376,7 @@ def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lha
              for line in inf:
                  if 'lhaid' in line:
                      outf.write('{} = lhaid ! if pdlabel=lhapdf, this is the lhapdf number\n'.format(lhaid))
-                     if lhaid is '$DEFAULT_PDF_SETS':
+                     if lhaid == '$DEFAULT_PDF_SETS':
                          outf.write('$DEFAULT_PDF_MEMBERS  = reweight_PDF\n')
                  else:
                      outf.write(line)
@@ -385,7 +385,9 @@ def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lha
         madspin_card = os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, template=True))
         if os.path.exists(madspin_card):
             shutil.copyfile(madspin_card, os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, mH=mH, mA=mA, tb=tb)))
-    print ('MG5 files prepared in {}/{}_{}_{}_{}_{}'.format(outputDIR, production_mode, mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails))
+    mass_mother = ( mA if production_mode.startswith('A') else (mH))
+    mass_daughter = ( mH if production_mode.startswith('A') else (mA))
+    print ('MG5 files prepared in {}/{}_{}_{}_{}_{}'.format(outputDIR, production_mode, mass_to_string(mass_mother), mass_to_string(mass_daughter), mass_to_string(tb), smpdetails))
     return
 
 def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lhaid=None, queue="condor_spool", test=False, benchmarks= False, fullsim=False, gridpointsdata=None, templateDIR=None, saveprocessinfos=False, customizecards=False, mode=None):
@@ -438,10 +440,8 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
             outf.write('    mkdir {}_ggfusion_b-associatedproduction/\n'.format(production_mode))
             outf.write('fi\n')
             outf.write('cp -r ../../../../../../example_cards {}_ggfusion_b-associatedproduction/.\n'.format(production_mode))
-        elif benchmarks:
-            outf.write('ln -s -d ../../../../../../benchmarks/ .\n')
         else:
-            outf.write('ln -s -d ../../../../../../PrivateProd_run2/ .\n')
+            outf.write('ln -s -d ../../../../../../{}/ .\n'.format('benchmarks' if benchmarks else('fullsim'if fullsim else('PrivateProd_run2'))))
         outf.write('popd\n')
         outf.write('pushd bin/MadGraph5_aMCatNLO\n')
 
@@ -473,28 +473,30 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
             mH = float_to_mass(H)
             mA = float_to_mass(A)
             mHc= max(mH, mA)
+            mother_mass = ( mA if mode=='A' else ( mH))
+            daughter_mass = (mH  if mode=='A' else ( mA))
             if mH < 125.:
-                s = '# skipping point (mH, mA) = ({}, {})'.format(mH, mA)
-                print (s)
-                #outf.write(s + '\n')
+                logger.debug("2HDMC can simulate points where mH < smHiggs for {} scenario ".format(scenario))
+                print('# skipping point (mH, mA) = ({}, {})'.format(mH, mA))
                 continue
             for tb in tb_list:
                 wH, wA, wh2tobb, wh3tobb, l2, l3, lR7, sinbma, tb, xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH, HtoZABR, AtobbBR, AtoZHBR, HtobbBR = compute_widths_BR_and_lambdas(mH, mA, mh, tb, process = process, pdfName=pdfName, saveprocessinfos=saveprocessinfos)
                 ymb_H, ymb_A = Fix_Yukawa_sector(H, A, tb, sinbma, wh2tobb, wh3tobb, customizecards)
                 logger.info( 'ymb_H: {}       ymb_A: {} '.format(ymb_H, ymb_A))
                 prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb_A, lhaid, smpdetails, templateDIR, outputDIR, customizecards, production_mode)
-                if production_mode.startswith('A'):
-                    cardname = "{}_{}_{}_{}_{}".format(production_mode, mass_to_string(mA), mass_to_string(mH), mass_to_string(tb), smpdetails)
-                else:
-                    cardname = "{}_{}_{}_{}_{}".format(production_mode, mass_to_string(mH), mass_to_string(mA), mass_to_string(tb), smpdetails)
-
+                
+                cardname = "{}_{}_{}_{}_{}".format(production_mode, mass_to_string(mother_mass), mass_to_string(daughter_mass), mass_to_string(tb), smpdetails)
+                if wH/mH > 0.1 or wA/mA > 0.1:
+                    logger.critical(' width/mass >> 10 % Narrow-width approximation may not be valid for mass point: {}'.format(cardname)) 
+                if wH/mH < 10e-8 or wA/mA < 10e-8:
+                    logger.critical(' width/mass < 10e-8 : Slows down the code and can lead to numerical instability')
                 if saveprocessinfos:
                     xsc = (xsec_ggH if process=='ggH' else(xsec_bbH))
                     err = (err_integration_ggH if process=='ggH' else( err_integration_bbH))
                     mother_decay = ( AtoZHBR if mode=='A' else ( HtoZABR))
                     daughter_decay = ( HtobbBR if mode == 'A' else( AtobbBR))
                     f.write('{} {} {} {} {} {} {} {} {} {} {} {} {}\n'.format(cardname, xsc ,err, mother_decay, daughter_decay, ymb_H, ymb_A, wh2tobb, wh3tobb, wH, wA, wH*100/mH, wA*100/mA))
-                loc = ('{}_ggfusion_b-associatedproduction/example_cards'.format(production_mode) if test else ('PrivateProd_run2') )
+                loc = ('{}_ggfusion_b-associatedproduction/example_cards'.format(production_mode) if test else ('benchmarks' if benchmarks else('fullsim'if fullsim else('PrivateProd_run2'))))
                 carddir ="cards/production/13TeV/{}/{}".format(loc, cardname)
                 workqueue='{}'.format(queue)
                 scram_arch="slc7_amd64_gcc820"
@@ -504,11 +506,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
                 # bash gridpack_generation.sh ${cardname} ${carddir} ${workqueue} ALL ${scram_arch} ${cmssw_version}
                 #outf.write( "./gridpack_generation.sh {} {} {} ALL {} {}\n".format(cardname, carddir, workqueue, scram_arch, cmssw_version ))
                 outf.write( "./gridpack_generation.sh {} {} {} \n".format(cardname, carddir, workqueue))
-               
-                if production_mode.startswith('A'):
-                    process_name = '{}_{}_{}_{}_{}'.format(production_mode, mass_to_string(mA), mass_to_string(mH), mass_to_string( tb), smpdetails)
-                else:
-                    process_name = '{}_{}_{}_{}_{}'.format(production_mode, mass_to_string(mH), mass_to_string(mA), mass_to_string( tb), smpdetails)
+                process_name = '{}_{}_{}_{}_{}'.format(production_mode, mass_to_string(mother_mass), mass_to_string(daughter_mass), mass_to_string( tb), smpdetails)
                 directory = '{}/'.format(outputDIR) + process_name
                 if not customizecards:
                     param_card_decayh2= './{}/{}_param_card.dat.decay_h2'.format(directory, cardname)
@@ -544,7 +542,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         logger.warning(' Please run_madwidths.sh to overwrite the param_card before you lunch your gridpack generations !')
         logger.warning('cd MG5_aMC_vX_X_X')
         logger.warning('./bin/mg5_aMC run_madwidths.sh')
-        logger.warning('./run_yukawa_to_mbonshell.sh')
+        logger.warning('bash ./run_yukawa_to_mbonshell.sh')
     print ('All commands prepared in ./prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()))
 
 if __name__ == '__main__':
