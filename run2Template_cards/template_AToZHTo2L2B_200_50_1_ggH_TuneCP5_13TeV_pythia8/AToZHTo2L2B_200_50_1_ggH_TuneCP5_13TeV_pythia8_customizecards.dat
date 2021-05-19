@@ -10,9 +10,6 @@ set param_card mass 25 125.0     # h1: h
 set param_card mass 35 200.0     # h2: H
 set param_card mass 36 50.0      # h3: A
 set param_card mass 37 200.0     # hc: Hc
-set param_card mass 5  4.75      # MB:(mb pole mass )
 # Settings for the scalar widths 
 set param_card width 36 Auto
 set param_card width 35 0.96446288
-# Settings of the yukawa couplings 
-set param_card yukawa 5 4.75     #ymb : bottom yukawa coupling
