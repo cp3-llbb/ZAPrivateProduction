@@ -18,13 +18,15 @@ cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo
 ### How to Run:
 ```python
 # run a test
-./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards
+./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards 
 # run all ZA run2 UL mass points 
-./prepare_MG5_cards.py --process bbH --templates run2Template_cards --queue condor_spool -s 4FS -pdf NNPDF31
+./prepare_MG5_cards.py --process bbH --templates run2Template_cards --queue condor_spool -s 4FS -pdf NNPDF31 -m H
 ```
-- ``-p``/``process``: bbH or ggH
+- ``-p``/``--process``: bbH or ggH
+- ``-m``/``--mode``: H or A means ( H->ZA or A->ZH)
 - ``-q``/``--queue``: condor, condor_spool, slurm or 1nh 
 - ``-s``/``--flavourscheme``: Production scheme 4FS, 5FS or None
+- ``--customizecards``: default False, param_card.dat will be generated instead !
 - ``--templates`` : a directory with run cards for the two processes, each in a subdirectory
 - ``--gridpoints``: a directory with the JSON files with (mA, mH) points definitions
 - ``--fullsim``: Generate 21 signal mass points per process saved by default in ``fullsim/``
@@ -40,8 +42,9 @@ If you leave this out, the default will be set to ``$DEFAULT_PDF_SETS`` as short
 OR pass different ``--lhapdfsets`` with ``--lhaid``
 - ``--lhaid``: LHAID number , needed if you want to use different ``--lhapdfsets`` than the one mentionning above !
 Now in the dir cards the `blabla_param_card.dat` doesn't include the decay BR neither the total width for h3 and Z.
-You need to overwrite this card for each mass point to avoid madspin launch the automatic computation of the widths ! 
-Why you need to do that ? Because of these 2 open issue when using madspin [here](https://answers.launchpad.net/mg5amcnlo/+question/696286) and [here](https://answers.launchpad.net/mg5amcnlo/+question/696148)
+- ``--saveprocessinfos``: save BR, widths and xsc after running sushi. By default set to `False` , note that the code is much slower when this flag is turned on.
+- You need to overwrite this card for each mass point to avoid madspin launch the automatic computation of the widths ! 
+Why you need to do that ? Because of these 2 open issue when using madspin [here](https://answers.launchpad.net/mg5amcnlo/+question/696286) and [here](https://answers.launchpad.net/mg5amcnlo/+question/696148).
 So Simply run as follow: 
 ```bash 
 cd MG5_aMC_vX_X_X
@@ -56,12 +59,14 @@ The goal of the parsed code is the syntactic analysis of the Madgraph cards to c
 - The cards's right structure.
 - Wrong objects definition.
 - Possible bugs.
+
 Proc card checks:
 - Only one proton definition is permitted
 - The correct pdf-set used in the run card. 
 - The add-process line must contain generate line. The possible jet must be defined.
 - The model line must be defined.
 - The card must include output line with correct.
+
 Inside the Run card:
 - 13 TeV energy of collision.
 - Declaration of nevents
