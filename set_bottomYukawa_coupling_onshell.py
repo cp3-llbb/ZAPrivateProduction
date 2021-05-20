@@ -129,6 +129,8 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
     cardname="madgraphInputs_mH-{}_mA-{}_tb-{}_mode{}.log".format(mh2, mh3, tb, mode)
     process =( 'bbH' if tb =='20p00' else('ggH'))
     
+    decaychains = {'A': {'35': (5, -5),'36': (23, 35) },
+                   'H': {'35': (23, 36), '36':(5, -5) } }
     aEWM1= 127.9
     aEW = 1./aEWM1
     Gf = 1.166390e-05
@@ -158,6 +160,8 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
         os.remove(param_card)
     if os.path.exists( param_card1) and os.path.exists( param_card2): 
         branching_ratios = collections.defaultdict(dict)
+        total_widths = collections.defaultdict(dict)
+        partial_widths = collections.defaultdict(dict)
         with open(param_card2, 'r') as inf2:
             with open(param_card, 'w+') as outf:
                 ID1 =None
@@ -175,12 +179,14 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                         inf2h3_mode = 1
                         inf2hc_mode = 0
                         line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
+                        total_widths['36'] = float(line2_modf.split()[-1])
                         outf.write(line2_modf)
                     elif "DECAY  37" in line2:
                         inf2h2_mode = 0
                         inf2h3_mode = 0
                         inf2hc_mode = 1
                         line2_modf =getTHDMprecisions(line=line2, motherParticle='H+', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
+                        total_widths['37'] = float(line2_modf.split()[-1])
                         outf.write(line2_modf)
                     if "ymb" in line2:
                         # FIXME YOU HAVE TO DO IT RIGHT FOR THIS PROCESS , Yukawa CAN'T BE THIS WAY
@@ -202,6 +208,7 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                 ID2=line2.split()[3]
                                 line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
                                 branching_ratios['36']['{}  {}'.format(ID1,ID2)]=float(line2_modf.split()[0])          
+                                partial_widths['36']['{}  {}'.format(ID1,ID2)]=float(line2_modf.split()[-1])          
                                 print( '--'*60)
                                 outf.write(line2_modf)
                             except:
@@ -212,6 +219,8 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                 ID1=line2.split()[2]
                                 ID2=line2.split()[3]
                                 line2_modf =getTHDMprecisions(line=line2, motherParticle='H+', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
+                                branching_ratios['37']['{}  {}'.format(ID1,ID2)]=float(line2_modf.split()[0])          
+                                partial_widths['37']['{}  {}'.format(ID1,ID2)]=float(line2_modf.split()[-1])          
                                 print( '--'*60)
                                 outf.write(line2_modf)
                             except:
@@ -230,6 +239,7 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                     inf1h3_mode = 0
                                     inf1hc_mode = 0
                                     line1_modf =getTHDMprecisions(line=line1, motherParticle='H', ID1=None, ID2=None, cardname=cardname, gettotal_width=True) 
+                                    total_widths['35'] = float(line1_modf.split()[-1])
                                     outf.write(line1_modf)
                                 elif "DECAY  36" in line1:
                                     inf1h2_mode = 0
@@ -243,6 +253,7 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                             ID2_=line1.split()[3]
                                             line1_modf =getTHDMprecisions(line=line1, motherParticle='H', ID1=ID1_, ID2=ID2_, cardname=cardname, gettotal_width=False) 
                                             branching_ratios['35']['{}  {}'.format(ID1_,ID2_)]=float(line1_modf.split()[0])       
+                                            partial_widths['35']['{}  {}'.format(ID1_,ID2_)]=float(line1_modf.split()[-1])          
                                             print( '--'*60)
                                             outf.write(line1_modf)
                                         except:
@@ -250,19 +261,33 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
 
                     else:
                         outf.write(line2)
-                for particle in ['35', '36']:
-                    print( particle, branching_ratios[particle])
-                    channel_with_max_BR = max(branching_ratios[particle], key=branching_ratios[particle].get)
-                    val = sorted(list(branching_ratios[particle].values()))
-                    if channel_with_max_BR not in ['5  -5', '-5  5', '23  35', '35  23', '36  23', '23  36']:
-                        logger.critical("** You need to be careful, seems to be [{}] is the main channel that contribute to the total width of : {} ** ".format(channel_with_max_BR, particle))
-                        logger.critical(" BR:  {} -> [{}] = {}".format(particle, channel_with_max_BR, branching_ratios[particle][channel_with_max_BR]))
-                        for i in [-2, -3]:
-                            res = val[i]
-                            logger.critical(".{}.contribution. BR:  {} -> {}  = {} ".format(abs(i), particle, get_keys_from_value(branching_ratios[particle], res),res))
+                for id in ['35', '36']:
+                    channel_with_max_BR = max(branching_ratios[id], key=branching_ratios[id].get)
+                    val = sorted(list(branching_ratios[id].values()))
+                    print( id, val )
+                    alloweddecays = ['{}  {}'.format(decaychains[mode][id][0], decaychains[mode][id][1]), '{}  {}'.format(decaychains[mode][id][1], decaychains[mode][id][0])]
+                    if channel_with_max_BR not in alloweddecays:
+                        logger.critical("** You need to be careful, seems to be {} is the main channel that contribute to the total width of : {} ** ".format(channel_with_max_BR, id))
+                        logger.critical(" BR:  {} -> {} = {}".format(id, channel_with_max_BR, branching_ratios[id][channel_with_max_BR]))
+                        
+                        idx = -2
+                        openchannel = channel_with_max_BR
+                        while openchannel not in alloweddecays:    
+                            res = val[-idx]
+                            pdgids = get_keys_from_value(branching_ratios[id], res)[0].split()
+                            openchannel = '{}  {}'.format(pdgids[0], pdgids[1])
+                            logger.critical(".{}.contribution. BR:  {} -> {}  = {} ".format(abs(idx), id, openchannel,res))
+                            idx -=1 
+                    for channel in alloweddecays:
+                        if channel in branching_ratios[id].keys():
+                            BR = partial_widths[id][channel] / total_widths[id]
+                            if BR> 1:
+                                logger.error( 'Branching ratio larger than one for {}'.format(id))
+                                logger.error(' Auto BR of {} = {}'.format(id, BR) )
+                        
         # there will be no need for these cards 
-        os.remove(param_card1)
-        os.remove(param_card2)
+        #os.remove(param_card1)
+        #os.remove(param_card2)
         print ( "{} successfully overwritten with 35 36 37 and 23 decay widths and branching ratios!".format(param_card) ) 
     else:
         logger.error(" XXX_param_card.dat with h2 decay OR XXX_param_card.dat with h3 and Z decay is missing, please run prepare_MG5_cards.py and then ./bin/mg5_aMC run_madwidths.sh from MG5_aMC_vX_X_X first !")
