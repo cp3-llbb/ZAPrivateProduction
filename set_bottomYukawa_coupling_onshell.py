@@ -261,29 +261,30 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
 
                     else:
                         outf.write(line2)
-                for id in ['35', '36']:
-                    channel_with_max_BR = max(branching_ratios[id], key=branching_ratios[id].get)
-                    val = sorted(list(branching_ratios[id].values()))
-                    print( id, val )
-                    alloweddecays = ['{}  {}'.format(decaychains[mode][id][0], decaychains[mode][id][1]), '{}  {}'.format(decaychains[mode][id][1], decaychains[mode][id][0])]
-                    if channel_with_max_BR not in alloweddecays:
-                        logger.critical("** You need to be careful, seems to be {} is the main channel that contribute to the total width of : {} ** ".format(channel_with_max_BR, id))
-                        logger.critical(" BR:  {} -> {} = {}".format(id, channel_with_max_BR, branching_ratios[id][channel_with_max_BR]))
-                        
-                        idx = -2
-                        openchannel = channel_with_max_BR
-                        while openchannel not in alloweddecays:    
-                            res = val[-idx]
-                            pdgids = get_keys_from_value(branching_ratios[id], res)[0].split()
-                            openchannel = '{}  {}'.format(pdgids[0], pdgids[1])
-                            logger.critical(".{}.contribution. BR:  {} -> {}  = {} ".format(abs(idx), id, openchannel,res))
-                            idx -=1 
-                    for channel in alloweddecays:
-                        if channel in branching_ratios[id].keys():
-                            BR = partial_widths[id][channel] / total_widths[id]
-                            if BR> 1:
-                                logger.error( 'Branching ratio larger than one for {}'.format(id))
-                                logger.error(' Auto BR of {} = {}'.format(id, BR) )
+        for id in ['35', '36']:
+            channel_with_max_BR = max(branching_ratios[id], key=branching_ratios[id].get)
+            val = sorted(list(branching_ratios[id].values()))
+            print( id, val )
+            alloweddecays = ['{}  {}'.format(decaychains[mode][id][0], decaychains[mode][id][1]), '{}  {}'.format(decaychains[mode][id][1], decaychains[mode][id][0])]
+            idx = -2
+            if channel_with_max_BR not in alloweddecays:
+                logger.critical('** You need to be careful with : {}'.format(param_card))
+                logger.critical('   seems to be {} is the main channel that contribute to the total width of : {} ** '.format(channel_with_max_BR, id))
+                logger.critical('   BR:  {} -> {} = {}'.format( id, channel_with_max_BR, branching_ratios[id][channel_with_max_BR]))
+                    
+            openchannel = channel_with_max_BR
+            while openchannel not in alloweddecays:    
+                res = val[idx]
+                pdgids = get_keys_from_value(branching_ratios[id], res)[0].split()
+                openchannel = '{}  {}'.format(pdgids[0], pdgids[1])
+                logger.critical(".{}.contribution. BR:  {} -> {}  = {} ".format(abs(idx), id, openchannel,res))
+                idx -=1 
+            for channel in alloweddecays:
+                if channel in branching_ratios[id].keys():
+                    BR = partial_widths[id][channel] / total_widths[id]
+                    if BR> 1:
+                        logger.error(' Branching ratio larger than one for {}'.format(id))
+                        logger.error(' Auto BR of {} = {}'.format(id, BR) )
                         
         # there will be no need for these cards 
         #os.remove(param_card1)
