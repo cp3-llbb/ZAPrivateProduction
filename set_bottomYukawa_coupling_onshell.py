@@ -174,9 +174,8 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                         inf2h2_mode = 0
                         inf2h3_mode = 1
                         inf2hc_mode = 0
-                        if tb =="1p50":
-                            line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
-                            outf.write(line2_modf)
+                        line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
+                        outf.write(line2_modf)
                     elif "DECAY  37" in line2:
                         inf2h2_mode = 0
                         inf2h3_mode = 0
@@ -197,19 +196,16 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                         #else:
                         outf.write('    5 {:.8e}   # ymb\n'.format(ymb))
                     elif inf2h3_mode ==1:
-                        if process == 'ggH':
-                            if "DECAY  36" not in line2:
-                                try:
-                                    ID1=line2.split()[2]
-                                    ID2=line2.split()[3]
-                                    line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
-                                    branching_ratios['36']['{}  {}'.format(ID1,ID2)]=float(line2_modf.split()[0])          
-                                    print( '--'*60)
-                                    outf.write(line2_modf)
-                                except:
-                                    outf.write(line2)
-                        else:
-                            outf.write(line2)
+                        if "DECAY  36" not in line2:
+                            try:
+                                ID1=line2.split()[2]
+                                ID2=line2.split()[3]
+                                line2_modf =getTHDMprecisions(line=line2, motherParticle='A', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
+                                branching_ratios['36']['{}  {}'.format(ID1,ID2)]=float(line2_modf.split()[0])          
+                                print( '--'*60)
+                                outf.write(line2_modf)
+                            except:
+                                outf.write(line2)
                     elif inf2hc_mode ==1:
                         if "DECAY  37" not in line2:
                             try:
@@ -233,28 +229,25 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                     inf1h2_mode = 1
                                     inf1h3_mode = 0
                                     inf1hc_mode = 0
-                                    if process == 'ggH':
-                                        line1_modf =getTHDMprecisions(line=line1, motherParticle='H', ID1=None, ID2=None, cardname=cardname, gettotal_width=True) 
-                                        outf.write(line1_modf)
+                                    line1_modf =getTHDMprecisions(line=line1, motherParticle='H', ID1=None, ID2=None, cardname=cardname, gettotal_width=True) 
+                                    outf.write(line1_modf)
                                 elif "DECAY  36" in line1:
                                     inf1h2_mode = 0
                                     inf1h3_mode = 1
                                     inf1hc_mode = 0
                                 
                                 if inf1h2_mode == 1:
-                                    if process == 'ggH':
-                                        if "DECAY  35" not in line1:
-                                            try:
-                                                ID1_=line1.split()[2]
-                                                ID2_=line1.split()[3]
-                                                line1_modf =getTHDMprecisions(line=line1, motherParticle='H', ID1=ID1_, ID2=ID2_, cardname=cardname, gettotal_width=False) 
-                                                branching_ratios['35']['{}  {}'.format(ID1_,ID2_)]=float(line1_modf.split()[0])       
-                                                print( '--'*60)
-                                                outf.write(line1_modf)
-                                            except:
-                                                outf.write(line1)
-                                    else: # WHY FIXME
-                                        outf.write(line1)
+                                    if "DECAY  35" not in line1:
+                                        try:
+                                            ID1_=line1.split()[2]
+                                            ID2_=line1.split()[3]
+                                            line1_modf =getTHDMprecisions(line=line1, motherParticle='H', ID1=ID1_, ID2=ID2_, cardname=cardname, gettotal_width=False) 
+                                            branching_ratios['35']['{}  {}'.format(ID1_,ID2_)]=float(line1_modf.split()[0])       
+                                            print( '--'*60)
+                                            outf.write(line1_modf)
+                                        except:
+                                            outf.write(line1)
+
                     else:
                         outf.write(line2)
                 for particle in ['35', '36']:
@@ -268,8 +261,8 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                             res = val[i]
                             logger.critical(".{}.contribution. BR:  {} -> {}  = {} ".format(abs(i), particle, get_keys_from_value(branching_ratios[particle], res),res))
         # there will be no need for these cards 
-        #os.remove(param_card1)
-        #os.remove(param_card2)
+        os.remove(param_card1)
+        os.remove(param_card2)
         print ( "{} successfully overwritten with 35 36 37 and 23 decay widths and branching ratios!".format(param_card) ) 
     else:
         logger.error(" XXX_param_card.dat with h2 decay OR XXX_param_card.dat with h3 and Z decay is missing, please run prepare_MG5_cards.py and then ./bin/mg5_aMC run_madwidths.sh from MG5_aMC_vX_X_X first !")
