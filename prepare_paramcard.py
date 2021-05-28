@@ -146,7 +146,7 @@ def prepare_param_cards(mH=None, mA=None, mh=None, mhc=None, MB=None, l2=None, l
             for line in inf:
                 # BLOCK MASS #
                 if " MB " in line and pass_ymbandmb_toparamcards:
-                    outf.write('    5 {:.6f}   # MB\n'.format(MB))
+                    outf.write('    5 {}   # MB\n'.format(MB))
                 elif "mhc" in line and pass_ymbandmb_toparamcards:
                     outf.write('   37 {:.6f}   # mhc\n'.format(mhc))
                 # BLOCK YUKAWA # 

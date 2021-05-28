@@ -210,17 +210,19 @@ def PlotWidths(thdmc_cards=None, default_cards=None, madspin_cards=None, NWA=Fal
             fig= plt.figure(figsize=(8,6))
             ax = fig.add_subplot(111)
             for idx, dir in enumerate(dict.keys()):
-                # 0 default 1 thdmc 2 madspin
                 linestyles = mpltex.linestyle_generator()
+                # widths after correction and from thdmc results are very close,  almost enable to see the difference 
+                # So keep linewidth this way ! 
+                lw= (5. if 'thdmc' in dir else(2.))
                 runopts=( 'after Yukawa coupling fix' if 'after' in dir else ( 'before Yukawa coupling fix' if 'before' in dir else('from 2HDMC.1.8.0' )))
-            
+                wsuffix=( r'h3 \rightarrow bb' if w =='partial' else (w))
                 if NWA:
                     dict[dir][tb] = [i / j for i, j in zip(dict[dir][tb], mh3_list[tb])]
                 
 
                 else:
-                    plt.plot(mh3_list[tb], dict[dir][tb], color=colors[idx], linestyle='solid', marker=markers[idx], linewidth=2., label=r'$tan\beta= %s $: %s'%(tb, runopts)) 
-                    ax.set_ylabel(r'$\Gamma_{%s} %s [GeV]$'%(w, '/ M' if NWA else('')) , fontsize=14, horizontalalignment='right', y=1.0)
+                    plt.plot(mh3_list[tb], dict[dir][tb], color=colors[idx], linestyle='solid', marker=markers[idx], linewidth=lw, label=r'$tan\beta= %s $: %s'%(tb, runopts)) 
+                    ax.set_ylabel(r'$\Gamma_{%s} %s$ [GeV]'%(wsuffix, '/ M' if NWA else('')) , fontsize=14, horizontalalignment='right', y=1.0)
                     ax.set_xlabel(r'$MA[GeV]$', fontsize=14, horizontalalignment='right', y=1.0)
                 
                     ax.set_xlim(xmin=min(mh3_list[tb]), xmax=max(mh3_list[tb]))

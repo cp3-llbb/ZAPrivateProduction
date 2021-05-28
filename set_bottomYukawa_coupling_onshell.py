@@ -282,13 +282,13 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
             for channel in alloweddecays:
                 if channel in branching_ratios[id].keys():
                     BR = partial_widths[id][channel] / total_widths[id]
-                    if BR> 1:
+                    if BR> 1.:
                         logger.error(' Branching ratio larger than one for {}'.format(id))
                         logger.error(' Auto BR of {} = {}'.format(id, BR) )
                         
         # there will be no need for these cards 
-        #os.remove(param_card1)
-        #os.remove(param_card2)
+        os.remove(param_card1)
+        os.remove(param_card2)
         print ( "{} successfully overwritten with 35 36 37 and 23 decay widths and branching ratios!".format(param_card) ) 
     else:
         logger.error(" XXX_param_card.dat with h2 decay OR XXX_param_card.dat with h3 and Z decay is missing, please run prepare_MG5_cards.py and then ./bin/mg5_aMC run_madwidths.sh from MG5_aMC_vX_X_X first !")
