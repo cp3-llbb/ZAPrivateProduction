@@ -49,9 +49,16 @@ def which_points(fullsim=False, benchmarks=False, test=False, dataDir="./data"):
     grid['example_card'] = [
         ( 500, 300),]
     grid['benchmarks'] = [
-        ( 500, 250), ( 240, 130), # low mass -boosted region
-        ( 500, 300), ( 550, 300), ( 670, 500), # resolved region 
-        ( 780, 680), ( 700, 200), ( 800, 140)] # forward region
+        ( 200, 125),
+        # ATLAS benchmarks : https://arxiv.org/pdf/1804.01126.pdf
+        ( 500, 250), 
+        ( 240, 130), 
+       #( 500, 300), ( 550, 300), ( 670, 500), # resolved region 
+        ( 780, 680), 
+        ( 700, 200), 
+        ( 510, 130),
+        ( 750, 610), 
+        ( 800, 140)] # forward region
     grid['fullsim'] = [
         #(MH, MA)
         ( 200, 50), ( 200, 100),
@@ -381,10 +388,10 @@ def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lha
                  else:
                      outf.write(line)
     suffix = 'madspin_card'
-    if 'ggH' not in smpdetails:
-        madspin_card = os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, template=True))
-        if os.path.exists(madspin_card):
-            shutil.copyfile(madspin_card, os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, mH=mH, mA=mA, tb=tb)))
+    #if 'ggH' not in smpdetails:
+    madspin_card = os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, template=True))
+    if os.path.exists(madspin_card):
+        shutil.copyfile(madspin_card, os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, mH=mH, mA=mA, tb=tb)))
     mass_mother = ( mA if production_mode.startswith('A') else (mH))
     mass_daughter = ( mH if production_mode.startswith('A') else (mA))
     print ('MG5 files prepared in {}/{}_{}_{}_{}_{}'.format(outputDIR, production_mode, mass_to_string(mass_mother), mass_to_string(mass_daughter), mass_to_string(tb), smpdetails))
@@ -396,6 +403,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
     suffix= ('example' if test else( 'benchmarks' if benchmarks else('fullsim' if fullsim else('all'))))
     outputDIR = ( 'example_cards' if test else('benchmarks' if benchmarks else('fullsim' if fullsim else('PrivateProd_run2'))))
     production_mode = 'HToZATo2L2B' if mode =='H' else ( 'AToZHTo2L2B' if mode=='A' else ('hToZATo2L2B'))
+    scenario = 'HToZA' if mode =='H' else ( 'AToZH' if mode=='A' else ('hToZA'))
     
     mh=125.
     mb = 4.92 # mb(OS) https://arxiv.org/pdf/1610.07922.pdf page 7
@@ -414,7 +422,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
 
     logger.info(" Please NOTE : For ggH process the Z decay is included in the Matrix Elemet, and h3 should be added in pythia8 fragment, No madspin card will created !")
     logger.info( " You choose {} to be generated for your gridpack production ! ".format( "customize_card.dat" if customizecards else "param_card.dat"))
-    with open('prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()), 'w+') as outf, open('run_madwidths.sh', 'w+') as outf2, open('run_yukawa_to_mbonshell.sh', 'w+') as outf3:
+    with open('prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()), 'w+') as outf, open('run_madwidths.sh', 'w+') as outf2, open('run_yukawa_to_mbonshell.sh', 'w+') as outf3:
         outf2.write('import model 2HDMtII_NLO\n')
         
         outf.write('# Notes:\n')
@@ -453,7 +461,6 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
             outf.write('# So you have to call : ./submit_condor_gridpack_generation.sh \n')
         outf.write('# Now for the real gridpack production\n')
         
-        scenario = 'HToZA' if mode =='H' else ( 'AToZH' if mode=='A' else ('hToZA'))
         datasetName_xsc_file =os.path.join(gridpointsdata,"list_{}_{}_{}_datasetnames.txt".format(suffix, process, scenario))
         if saveprocessinfos:
             if os.path.exists(datasetName_xsc_file):
@@ -506,6 +513,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
                 # bash gridpack_generation.sh ${cardname} ${carddir} ${workqueue} ALL ${scram_arch} ${cmssw_version}
                 #outf.write( "./gridpack_generation.sh {} {} {} ALL {} {}\n".format(cardname, carddir, workqueue, scram_arch, cmssw_version ))
                 outf.write( "./gridpack_generation.sh {} {} {} \n".format(cardname, carddir, workqueue))
+                outf.write( "rm -rf {} \n".format(cardname))
                 process_name = '{}_{}_{}_{}_{}'.format(production_mode, mass_to_string(mother_mass), mass_to_string(daughter_mass), mass_to_string( tb), smpdetails)
                 directory = '{}/'.format(outputDIR) + process_name
                 if not customizecards:
@@ -543,7 +551,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         logger.warning('cd MG5_aMC_vX_X_X')
         logger.warning('./bin/mg5_aMC run_madwidths.sh')
         logger.warning('bash ./run_yukawa_to_mbonshell.sh')
-    print ('All commands prepared in ./prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()))
+    print ('All commands prepared in ./prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()))
 
 if __name__ == '__main__':
 
