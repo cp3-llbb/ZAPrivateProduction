@@ -378,13 +378,18 @@ def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lha
                 else:
                     outf.write(line)
     suffix = 'run_card'
+    suf = '  ' if 'ggH' in smpdetails else ' '
     with open(os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, template=True)), 'r') as inf:
          with open(os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
              for line in inf:
                  if 'lhaid' in line:
-                     outf.write('{} = lhaid ! if pdlabel=lhapdf, this is the lhapdf number\n'.format(lhaid))
+                     outf.write('{}{} = lhaid ! if pdlabel=lhapdf, this is the lhapdf number. Only\n'.format(suf, lhaid))
+                     outf.write('       ! numbers for central PDF sets are allowed. Can be a list;\n')
+                     outf.write('       ! PDF sets beyond the first are included via reweighting.\n')
                      if lhaid == '$DEFAULT_PDF_SETS':
-                         outf.write('$DEFAULT_PDF_MEMBERS  = reweight_PDF\n')
+                         outf.write('{}$DEFAULT_PDF_MEMBERS  = reweight_PDF ! Reweight to get PDF uncertainty. Should be a\n'.format(suf))
+                         outf.write('                            ! list booleans of equal length to lhaid to specify for\n')
+                         outf.write('                            !  which PDF set to include the uncertainties.\n')
                  else:
                      outf.write(line)
     suffix = 'madspin_card'
@@ -420,7 +425,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         tb_list = [20.0]
         #tb_list = [ 0.5 ,  1.5 ,  4.5,  8. ,  20. ]
 
-    logger.info(" Please NOTE : For ggH process the Z decay is included in the Matrix Elemet, and h3 should be added in pythia8 fragment, No madspin card will created !")
+    logger.info(" Please NOTE : For ggH process the Z decay is included in the Matrix Elemet, and h3 should be added in pythia8 gen-fragment or in madspin card !")
     logger.info( " You choose {} to be generated for your gridpack production ! ".format( "customize_card.dat" if customizecards else "param_card.dat"))
     with open('prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()), 'w+') as outf, open('run_madwidths.sh', 'w+') as outf2, open('run_yukawa_to_mbonshell.sh', 'w+') as outf3:
         outf2.write('import model 2HDMtII_NLO\n')
