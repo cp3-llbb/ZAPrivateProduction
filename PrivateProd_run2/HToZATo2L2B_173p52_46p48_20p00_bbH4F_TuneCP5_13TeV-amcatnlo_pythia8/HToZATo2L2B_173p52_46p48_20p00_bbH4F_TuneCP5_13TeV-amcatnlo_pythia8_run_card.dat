@@ -88,13 +88,21 @@
 #***********************************************************************
  False    = fixed_ren_scale  ! if .true. use fixed ren scale
  False    = fixed_fac_scale  ! if .true. use fixed fac scale
- 91.118   = muR_ref_fixed    ! fixed ren reference scale 
- 91.118   = muF_ref_fixed    ! fixed fact reference scale
+ 91.118   = mur_ref_fixed    ! fixed ren reference scale 
+ 91.188   = muf1_ref_fixed   ! fixed fact reference scale for pdf1
+ 91.188   = muf2_ref_fixed   ! fixed fact reference scale for pdf2
  -1 = dynamical_scale_choice ! Choose one (or more) of the predefined
            ! dynamical choices. Can be a list; scale choices beyond the
            ! first are included via reweighting
- 1.0  = muR_over_ref  ! ratio of current muR over reference muR
- 1.0  = muF_over_ref  ! ratio of current muF over reference muF
+#************************************************************************
+# Renormalization and factorization scales (advanced and NLO options)  *
+#***********************************************************************
+ False = fixed_qes_scale     ! if .true. use fixed Ellis-Sexton scale
+ 91.118    = qes_ref_fixed   ! fixed Ellis-Sexton reference scale
+ 1.0   = mur_over_ref  ! ratio of current muR over reference muR
+ 1.0   = qes_over_ref  ! ratio of current QES over reference QES
+ 1.0   = muf1_over_ref ! ratio of current muF1 over reference muF1
+ 1.0   = muf2_over_ref ! ratio of current muF2 over reference muF2
 #*********************************************************************** 
 # Reweight variables for scale dependence and PDF uncertainty          *
 #***********************************************************************
@@ -104,6 +112,10 @@
             ! rw_rscale and rw_fscale factors. Should be a list of 
             ! booleans of equal length to dynamical_scale_choice to
             ! specify for which choice to include scale dependence.
+ -1.0  = rw_fscale_down ! lower bound for fact scale variations
+ -1.0  = rw_rscale_down ! lower bound for ren scale variations
+ -1.0  = rw_fscale_up   ! upper bound for fact scale variations
+ -1.0  = rw_rscale_up   ! upper bound for ren scale variations
 #***********************************************************************
 # Store reweight information in the LHE file for off-line model-       *
 # parameter reweighting at NLO+PS accuracy                             *
@@ -134,7 +146,7 @@
 #  - More specific cuts can be specified in SubProcesses/cuts.f        *
 #***********************************************************************
   1.0  = jetalgo   ! FastJet jet algorithm (1=kT, 0=C/A, -1=anti-kT)
-  0.7  = jetradius ! The radius parameter for the jet algorithm
+  1.0  = jetradius ! The radius parameter for the jet algorithm
  10.0  = ptj       ! Min jet transverse momentum
  -1.0  = etaj      ! Max jet abs(pseudo-rap) (a value .lt.0 means no cut)
 #***********************************************************************
@@ -171,4 +183,9 @@
 # For aMCfast+APPLGRID use in PDF fitting (http://amcfast.hepforge.org)*
 #***********************************************************************
  0 = iappl ! aMCfast switch (0=OFF, 1=prepare grids, 2=fill grids)
+#***********************************************************************
+### Maximal PDG code for quark to be considered a jet when applying cuts.*
+### At least all massless quarks of the model should be included here.   *
+##*********************************************************************
+  4 = maxjetflavor
 #***********************************************************************
