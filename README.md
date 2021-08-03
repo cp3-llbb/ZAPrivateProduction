@@ -11,14 +11,15 @@ or a conda environment (which requires a few changes to the script), see the [in
 - For each process we have a dir template, whatever changes you need to make it has to be for these cards Only !
 ```bash
 # gg Fusion; LO Loop Induced 4F-scheme
-cd run2Template_cards/template_HToZATo2L2B_200_50_1_ggH_TuneCP5_13TeV_pythia8`
+cd run2Template_cards/template_HToZATo2L2B_200_50_1_ggH_TuneCP5_13TeV_pythia8
 # b-associated Production; NLO 4F-scheme
-cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8`
+cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8
 ```
+``X_X_X`` : MH_MA_tanbeta parameters
 ### How to Run:
 ```python
 # run a test
-./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards 
+./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards --mode H 
 # run all ZA run2 UL mass points 
 ./prepare_MG5_cards.py --process bbH --templates run2Template_cards --queue condor_spool -s 4FS -pdf NNPDF31 -m H
 ```
@@ -26,6 +27,8 @@ cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo
 - ``-m``/``--mode``: H or A means ( H->ZA or A->ZH)
 - ``-q``/``--queue``: condor, condor_spool, slurm or 1nh 
 - ``-s``/``--flavourscheme``: Production scheme 4FS, 5FS or None
+- ``--interefernce``:  default False , `add process p p > h1 > etc ... @1`` 
+- ``--switch_bbH_To_LO`` : default True, produce bbH @ LO 
 - ``--customizecards``: default False, param_card.dat will be generated instead !
 - ``--templates`` : a directory with run cards for the two processes, each in a subdirectory
 - ``--gridpoints``: a directory with the JSON files with (mA, mH) points definitions
@@ -50,8 +53,9 @@ So Simply run as follow:
 cd MG5_aMC_vX_X_X
 # compute the decay BR and width using fake ymb for all pdgid mentionned in the madspin card ! 
 ./bin/mg5_aMC run_madwidths.sh
-# set the yukawa coupling to the mb on-shell 
-./run_yukawa_to_mbonshell.sh
+# checks difference in width between MadWidth and 2HDMC, set the yukawa coupling to the mb on-shell  
+# and over-write the final blabla_param_card.dat 
+./write_paramcards.sh
 ```
 ## Cards Parsing First :
 The code live inside ``genproductions/bin/MadGraph5_aMCatNLO/Utilities/parsing_code`` dir .

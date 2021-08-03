@@ -77,7 +77,7 @@ def getTHDMprecisions(line = None, motherParticle= None, ID1= None, ID2= None, c
         thdmc_BR = 0.
         thdmc_partialwidth = 0.
         thdmc_totalwidth = 0.
-        mode = {'A':0, 'H':0, 'H+':0}
+        mode = {'A':0, 'h': 0, 'H':0, 'H+':0}
         for line_ in f:
             if gettotal_width:
                 suffix =('' if motherParticle =='H+' else (' ') )
@@ -105,7 +105,7 @@ def getTHDMprecisions(line = None, motherParticle= None, ID1= None, ID2= None, c
         #  BR             NDA  ID1    ID2   ...
         9.095862e-01   2    36  23 # 210.920572285
         """
-        pdgid = (35 if motherParticle== 'H' else( 36 if motherParticle== 'A' else (37 if motherParticle== 'H+' else(logger.error(' you are not suppose to change the decay of : {}'.format(motherParticle))))))
+        pdgid = (35 if motherParticle== 'H' else( 36 if motherParticle== 'A' else (37 if motherParticle== 'H+' else( '25' if motherParticle== 'h' else(logger.error(' You are not suppose to change the decay of : {}'.format(motherParticle)))))))
         if gettotal_width:
             newline = 'DECAY  {}   {:.6e}\n'.format(pdgid, thdmc_totalwidth)
             relative_diff = abs((float(line.split()[-1]) - thdmc_totalwidth )/float(line.split()[-1]))
@@ -122,15 +122,17 @@ def getTHDMprecisions(line = None, motherParticle= None, ID1= None, ID2= None, c
         print( '2HDMCalculator:', newline )
     return newline
 
-def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
+def set_ymb_to_MBOnshell(param_card1=None, param_card2=None, interference=False):
     
-    param_card = param_card1.replace('.decay_h2', '')
+    param_card = param_card1.split('.decay')[0]
     mh2, mh3, tb, mode = getcardsParams(param_card)
     cardname="madgraphInputs_mH-{}_mA-{}_tb-{}_mode{}.log".format(mh2, mh3, tb, mode)
     process =( 'bbH' if tb =='20p00' else('ggH'))
     
-    decaychains = {'A': {'35': (5, -5),'36': (23, 35) },
-                   'H': {'35': (23, 36), '36':(5, -5) } }
+    decaychains = {'A': {'35': (5 , -5), '36': (23, 35) },
+                   'H': {'35': (23, 36), '36': (5, -5) },
+                   'h': {'25': (5 , -5), }
+                   }
     aEWM1= 127.9
     aEW = 1./aEWM1
     Gf = 1.166390e-05
@@ -162,19 +164,31 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
         branching_ratios = collections.defaultdict(dict)
         total_widths = collections.defaultdict(dict)
         partial_widths = collections.defaultdict(dict)
+
         with open(param_card2, 'r') as inf2:
             with open(param_card, 'w+') as outf:
                 ID1 =None
                 ID2 =None
+                inf2h1_mode = 0
                 inf2h2_mode = 0
                 inf2h3_mode = 0
                 inf2hc_mode = 0
                 for line2 in inf2:
-                    if "DECAY  35" in line2:
+                    if "DECAY  25" in line2:
+                        inf2h1_mode = 1
+                        inf2h2_mode = 0
+                        inf2h3_mode = 0
+                        inf2hc_mode = 0
+                        line2_modf =getTHDMprecisions(line=line2, motherParticle='h', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
+                        total_widths['25'] = float(line2_modf.split()[-1])
+                        outf.write(line2_modf)
+                    elif "DECAY  35" in line2:
+                        inf2h1_mode = 0
                         inf2h2_mode = 1
                         inf2h3_mode = 0
                         inf2hc_mode = 0
                     elif "DECAY  36" in line2:
+                        inf2h1_mode = 0
                         inf2h2_mode = 0
                         inf2h3_mode = 1
                         inf2hc_mode = 0
@@ -182,14 +196,16 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                         total_widths['36'] = float(line2_modf.split()[-1])
                         outf.write(line2_modf)
                     elif "DECAY  37" in line2:
+                        inf2h1_mode = 0
                         inf2h2_mode = 0
                         inf2h3_mode = 0
                         inf2hc_mode = 1
                         line2_modf =getTHDMprecisions(line=line2, motherParticle='H+', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
                         total_widths['37'] = float(line2_modf.split()[-1])
                         outf.write(line2_modf)
+
                     if "ymb" in line2:
-                        # FIXME YOU HAVE TO DO IT RIGHT FOR THIS PROCESS , Yukawa CAN'T BE THIS WAY
+                        # FIXME YOU HAVE TO DO IT RIGHT FOR THIS PROCESS , Yukawa coupling corrections CAN'T BE THIS WAY
                         #if process == 'bbH': # pp > h2 > h3 Z b b~ 
                             # https://arxiv.org/pdf/1808.01660.pdf eq 2.5 
                             # https://arxiv.org/pdf/1610.07922.pdf page 523 
@@ -201,6 +217,18 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                         #    print( ymb_HEFT)
                         #else:
                         outf.write('    5 {:.8e}   # ymb\n'.format(ymb))
+                    elif inf2h1_mode ==1:
+                        if "DECAY  25" not in line2:
+                            try:
+                                ID1=line2.split()[2]
+                                ID2=line2.split()[3]
+                                line2_modf =getTHDMprecisions(line=line2, motherParticle='h', ID1=ID1, ID2=ID2, cardname= cardname, gettotal_width=False)
+                                branching_ratios['25']['{}  {}'.format(ID1,ID2)]=float(line2_modf.split()[0])          
+                                partial_widths['25']['{}  {}'.format(ID1,ID2)]=float(line2_modf.split()[-1])          
+                                print( '--'*60)
+                                outf.write(line2_modf)
+                            except:
+                                outf.write(line2)
                     elif inf2h3_mode ==1:
                         if "DECAY  36" not in line2:
                             try:
@@ -225,23 +253,27 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
                                 outf.write(line2_modf)
                             except:
                                 outf.write(line2)
-
+             
+                    
                     elif "DECAY  35" in line2:
                         with open(param_card1, 'r') as inf1:
                             ID1_ =None
                             ID2_ =None
+                            inf2h1_mode = 0
                             inf1h2_mode = 0
                             inf1h3_mode = 0
                             inf1hc_mode = 0
                             for line1 in inf1:
                                 if "DECAY  35" in line1:
                                     inf1h2_mode = 1
+                                    inf2h1_mode = 0
                                     inf1h3_mode = 0
                                     inf1hc_mode = 0
                                     line1_modf =getTHDMprecisions(line=line1, motherParticle='H', ID1=None, ID2=None, cardname=cardname, gettotal_width=True) 
                                     total_widths['35'] = float(line1_modf.split()[-1])
                                     outf.write(line1_modf)
                                 elif "DECAY  36" in line1:
+                                    inf2h1_mode = 0
                                     inf1h2_mode = 0
                                     inf1h3_mode = 1
                                     inf1hc_mode = 0
@@ -261,6 +293,7 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None):
 
                     else:
                         outf.write(line2)
+        
         for id in ['35', '36']:
             channel_with_max_BR = max(branching_ratios[id], key=branching_ratios[id].get)
             val = sorted(list(branching_ratios[id].values()))
@@ -298,6 +331,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--param_card1', required=True, help='')
     parser.add_argument('--param_card2', required=True, help='')
+    parser.add_argument('--interference', action='store_true', default= False, help='add h1 interference')
     options = parser.parse_args()
     
-    set_ymb_to_MBOnshell(param_card1=options.param_card1, param_card2=options.param_card2)
+    set_ymb_to_MBOnshell(param_card1=options.param_card1, param_card2=options.param_card2, interference=options.interference)

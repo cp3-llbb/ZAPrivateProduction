@@ -2,6 +2,7 @@
 # how to make mc request soon your grid pack are ready :https://indico.cern.ch/event/321290/contributions/744568/attachments/620452/853749/McM_Tutorial_OPT.pdf
 #                                                       https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideSubgroupMC
 import os
+import glob
 import math
 import json
 import shutil
@@ -50,6 +51,7 @@ def which_points(fullsim=False, benchmarks=False, test=False, dataDir="./data"):
         ( 500, 300),]
     grid['benchmarks'] = [
         ( 200, 125),
+        ( 250, 50), # FAIL MCCM validation 
         # ATLAS benchmarks : https://arxiv.org/pdf/1804.01126.pdf
         ( 500, 250), 
         ( 240, 130), 
@@ -58,7 +60,8 @@ def which_points(fullsim=False, benchmarks=False, test=False, dataDir="./data"):
         ( 700, 200), 
         ( 510, 130),
         ( 750, 610), 
-        ( 800, 140)] # forward region
+       # ( 800, 140) nasty point with  broaden mass distribution 
+        ] # forward region
     grid['fullsim'] = [
         #(MH, MA)
         ( 200, 50), ( 200, 100),
@@ -240,11 +243,12 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb, process =None, pdfName="DEFAUL
     os.chdir(cwd)
     return wH, wA, wh2tobb, wh3tobb, l2, l3, lR7, sinbma, tb , xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH, HtoZABR, AtobbBR, AtoZHBR, HtobbBR
 
-def filename(suffix=None, smpdetails=None, production_mode=None, template=False, mH=None, mA=None, tb=None):
-    MASSES_TEMPLATE = '200_50_1' # FIXME improve the way reading these templates files ! 
+def filename(suffix=None, smpdetails=None, production_mode=None, templateDIR=None, template=False, mH=None, mA=None, tb=None):
+     
     if template:
-        masses = MASSES_TEMPLATE
-        cardName = 'template_' + production_mode+'_' + masses+ '_' + smpdetails +'/' + production_mode+'_' + masses + '_' + smpdetails+ '_' + suffix +'.dat'
+        cardNames = glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), '{}/template_{}_*'.format(templateDIR, production_mode), '*_{}_{}.dat'.format(smpdetails, suffix)))
+        cardName = cardNames[0].split('{}/'.format(templateDIR))[-1]
+
     else:
         if production_mode.startswith('A'):
             masses = '{}_{}_{}'.format(mass_to_string(mA), mass_to_string(mH), mass_to_string( tb))
@@ -313,8 +317,8 @@ def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lha
     suffix = 'customizecards'
     if customizecards:
         template_line = 'set param_card'
-        with open(os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, template=True)), 'r') as inf:
-            with open(os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
+        with open(os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, templateDIR, template=True)), 'r') as inf:
+            with open(os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, templateDIR, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
                 for line in inf:
                     if template_line in line and 'higgs 1' in line:
                         outf.write('{} higgs 1 {:.6f}\n'.format(template_line, l2))
@@ -364,11 +368,11 @@ def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lha
                 outf.write('# yukawa 5: ymb (bottom yukawa coupling)\n')
     # extramodels: no change needed
     suffix = 'extramodels'
-    shutil.copyfile(os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, template=True)), os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, mH=mH, mA=mA, tb=tb)))
+    shutil.copyfile(os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, templateDIR, template=True)), os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, templateDIR, mH=mH, mA=mA, tb=tb)))
     # proc_card: change the output name
     suffix = 'proc_card'
-    with open(os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, template=True)), 'r') as inf:
-        with open(os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
+    with open(os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, templateDIR, template=True)), 'r') as inf:
+        with open(os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, templateDIR, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
             for line in inf:
                 if ('output') in line:
                     if production_mode.startswith('A'):
@@ -379,8 +383,8 @@ def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lha
                     outf.write(line)
     suffix = 'run_card'
     suf = '  ' if 'ggH' in smpdetails else ' '
-    with open(os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, template=True)), 'r') as inf:
-         with open(os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
+    with open(os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, templateDIR, template=True)), 'r') as inf:
+         with open(os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, templateDIR, mH=mH, mA=mA, tb=tb)), 'w+') as outf:
              for line in inf:
                  if 'lhaid' in line:
                      outf.write('{}{} = lhaid ! if pdlabel=lhapdf, this is the lhapdf number. Only\n'.format(suf, lhaid))
@@ -394,15 +398,15 @@ def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lha
                      outf.write(line)
     suffix = 'madspin_card'
     #if 'ggH' not in smpdetails:
-    madspin_card = os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, template=True))
+    madspin_card = os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, templateDIR, template=True))
     if os.path.exists(madspin_card):
-        shutil.copyfile(madspin_card, os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, mH=mH, mA=mA, tb=tb)))
+        shutil.copyfile(madspin_card, os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, templateDIR, mH=mH, mA=mA, tb=tb)))
     mass_mother = ( mA if production_mode.startswith('A') else (mH))
     mass_daughter = ( mH if production_mode.startswith('A') else (mA))
     print ('MG5 files prepared in {}/{}_{}_{}_{}_{}'.format(outputDIR, production_mode, mass_to_string(mass_mother), mass_to_string(mass_daughter), mass_to_string(tb), smpdetails))
     return
 
-def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lhaid=None, queue="condor_spool", test=False, benchmarks= False, fullsim=False, gridpointsdata=None, templateDIR=None, saveprocessinfos=False, customizecards=False, mode=None):
+def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lhaid=None, queue="condor_spool", test=False, benchmarks=False, fullsim=False, gridpointsdata=None, templateDIR=None, saveprocessinfos=False, customizecards=False, mode=None, switch_bbH=False, interference=False):
     
     griddata = which_points(fullsim, benchmarks, test, gridpointsdata)
     suffix= ('example' if test else( 'benchmarks' if benchmarks else('fullsim' if fullsim else('all'))))
@@ -420,14 +424,18 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         tb_list = [1.5]
         #tb_list =[ 0.5 ,  1.5 ,  4.5,  8. ,  20. ]
     else:
-        OrderOfcomputation= 'NLO'
-        smpdetails= 'bbH4F_TuneCP5_13TeV-amcatnlo_pythia8'
+        if switch_bbH:
+            OrderOfcomputation= 'LO'
+            smpdetails='bbH4F_TuneCP5_13TeV_pythia8'
+        else:
+            OrderOfcomputation= 'NLO'
+            smpdetails= 'bbH4F_TuneCP5_13TeV-amcatnlo_pythia8'
         tb_list = [20.0]
         #tb_list = [ 0.5 ,  1.5 ,  4.5,  8. ,  20. ]
 
     logger.info(" Please NOTE : For ggH process the Z decay is included in the Matrix Elemet, and h3 should be added in pythia8 gen-fragment or in madspin card !")
     logger.info( " You choose {} to be generated for your gridpack production ! ".format( "customize_card.dat" if customizecards else "param_card.dat"))
-    with open('prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()), 'w+') as outf, open('run_madwidths.sh', 'w+') as outf2, open('run_yukawa_to_mbonshell.sh', 'w+') as outf3:
+    with open('prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()), 'w+') as outf, open('run_madwidths.sh', 'w+') as outf2, open('write_paramcards.sh', 'w+') as outf3:
         outf2.write('import model 2HDMtII_NLO\n')
         
         outf.write('# Notes:\n')
@@ -508,6 +516,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
                     mother_decay = ( AtoZHBR if mode=='A' else ( HtoZABR))
                     daughter_decay = ( HtobbBR if mode == 'A' else( AtobbBR))
                     f.write('{} {} {} {} {} {} {} {} {} {} {} {} {}\n'.format(cardname, xsc ,err, mother_decay, daughter_decay, ymb_H, ymb_A, wh2tobb, wh3tobb, wH, wA, wH*100/mH, wA*100/mA))
+                
                 loc = ('{}_ggfusion_b-associatedproduction/example_cards'.format(production_mode) if test else ('benchmarks' if benchmarks else('fullsim'if fullsim else('PrivateProd_run2'))))
                 carddir ="cards/production/13TeV/{}/{}".format(loc, cardname)
                 workqueue='{}'.format(queue)
@@ -521,18 +530,26 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
                 outf.write( "rm -rf {} \n".format(cardname))
                 process_name = '{}_{}_{}_{}_{}'.format(production_mode, mass_to_string(mother_mass), mass_to_string(daughter_mass), mass_to_string( tb), smpdetails)
                 directory = '{}/'.format(outputDIR) + process_name
+                
                 if not customizecards:
                     param_card_decayh2= './{}/{}_param_card.dat.decay_h2'.format(directory, cardname)
                     param_card_decayh3z= './{}/{}_param_card.dat.decay_h3z'.format(directory, cardname)
-                    template = os.path.join(templateDIR, filename("param_card", smpdetails, production_mode, template=True))
+                    template = os.path.join(templateDIR, filename("param_card", smpdetails, production_mode, templateDIR, template=True))
+                    
                     # keep them seprate just because they're using different ymb in the param_card!
                     # https://arxiv.org/pdf/1402.1178.pdf page 21
                     prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb_H, carddir=directory, template=template, cardname='{}_param_card.dat.decay_h2'.format(cardname), pass_ymbandmb_toparamcards=True)
                     outf2.write('compute_widths 35 --path={} --output={} --body_decay=2 --min_br=0.000625\n'.format(param_card_decayh2, param_card_decayh2))
                      
-                    prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb_A, carddir=directory, template=template, cardname='{}_param_card.dat.decay_h3z'.format(cardname), pass_ymbandmb_toparamcards=True)
-                    outf2.write('compute_widths 23 36 37 --path={} --output={} --body_decay=2 --min_br=0.000625\n'.format(param_card_decayh3z, param_card_decayh3z))
-                    outf3.write('python set_bottomYukawa_coupling_onshell.py --param_card1 {} --param_card2 {}\n'.format(param_card_decayh2, param_card_decayh3z))
+                    prepare_param_cards(mH, mA, mh, mHc, mb, l2, l3, lR7, sinbma, tb, ymb_A, carddir=directory, template=template, cardname='{}_param_card.dat.decay_{}h3z'.format(cardname, 'h1' if interference else ''), pass_ymbandmb_toparamcards=True)
+                    if interference:
+                        param_card_decayh1h3z= './{}/{}_param_card.dat.decay_h1h3z'.format(directory, cardname)
+                        outf2.write('compute_widths 23 25 36 37 --path={} --output={} --body_decay=2 --min_br=0.000625\n'.format(param_card_decayh1h3z, param_card_decayh1h3z))
+                        outf3.write('python call_madwidths_and_2hdmc.py --param_card1 {} --param_card2 {} --interference\n'.format(param_card_decayh2, param_card_decayh1h3z))
+                    else:
+                        outf2.write('compute_widths 23 36 37 --path={} --output={} --body_decay=2 --min_br=0.000625\n'.format(param_card_decayh3z, param_card_decayh3z))
+                        outf3.write('python call_madwidths_and_2hdmc.py --param_card1 {} --param_card2 {}\n'.format(param_card_decayh2, param_card_decayh3z))
+
                 #if fullsim:
                 #    outf.write('mv {}* /afs/cern.ch/user/k/kjaffel/public/{}_run2gridpacks/\n'.format(cardname, production_mode))
         
@@ -550,12 +567,12 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
      
     os.chmod('prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()), os.stat('prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower())).st_mode | stat.S_IXUSR)
     os.chmod('run_madwidths.sh', os.stat('run_madwidths.sh').st_mode | stat.S_IXUSR)
-    os.chmod('run_yukawa_to_mbonshell.sh', os.stat('run_yukawa_to_mbonshell.sh').st_mode | stat.S_IXUSR)
+    os.chmod('write_paramcards.sh', os.stat('write_paramcards.sh').st_mode | stat.S_IXUSR)
     if not customizecards:
         logger.warning(' Please run_madwidths.sh to overwrite the param_card before you lunch your gridpack generations !')
         logger.warning('cd MG5_aMC_vX_X_X')
         logger.warning('./bin/mg5_aMC run_madwidths.sh')
-        logger.warning('bash ./run_yukawa_to_mbonshell.sh')
+        logger.warning('bash ./write_paramcards.sh')
     print ('All commands prepared in ./prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()))
 
 if __name__ == '__main__':
@@ -571,6 +588,8 @@ if __name__ == '__main__':
     parser.add_argument('--benchmarks', action='store_true', help='Generate 3benchmarks scenarios for at high and low mass region of (MH, MA) for 5 different tb values, cards stored by default in  benchmarks/')
     parser.add_argument('--fullsim', action='store_true', help='Generate 21 signal mass points saved by default in fullsim/')
     parser.add_argument('--saveprocessinfos', action='store_true', default= True, help='store xsc for each process in .txt file in ./gridpoints')
+    parser.add_argument('--interference', action='store_true', default= False, help='add h1 interference')
+    parser.add_argument('--switch_bbH_To_LO', action='store_true', default= False, help='produce bbH cards @ LO')
     parser.add_argument('--templates', required=True, help='''Directory with 5 templates cards for your requested process:\n 
                             [ template_customizecards.dat, template_extramodels.dat, template_madspin_card.dat,  template_proc_card.dat, template_run_card.dat]\n''')
     # If you are not sure about your pdf sets setting, better use DEFAULT !
@@ -581,4 +600,4 @@ if __name__ == '__main__':
     parser.add_argument('-lhaid', '--lhaid', action='store',dest='lhaid', type=int, help = 'LHAPDF ID(ver 6.3.0) : Full list here : https://lhapdf.hepforge.org/pdfsets')
     options = parser.parse_args()
     
-    prepare_all_MG5_cards(process=options.process, flavourscheme=options.flavourscheme, lhapdfsets=options.lhapdfsets, lhaid=options.lhaid, test=options.test, benchmarks=options.benchmarks, fullsim=options.fullsim, queue=options.queue, gridpointsdata=options.gridpoints, templateDIR=options.templates, saveprocessinfos=options.saveprocessinfos, customizecards=options.customizecards, mode=options.mode)
+    prepare_all_MG5_cards(process=options.process, flavourscheme=options.flavourscheme, lhapdfsets=options.lhapdfsets, lhaid=options.lhaid, test=options.test, benchmarks=options.benchmarks, fullsim=options.fullsim, queue=options.queue, gridpointsdata=options.gridpoints, templateDIR=options.templates, saveprocessinfos=options.saveprocessinfos, customizecards=options.customizecards, mode=options.mode, switch_bbH= options.switch_bbH_To_LO, interference=options.interference)
