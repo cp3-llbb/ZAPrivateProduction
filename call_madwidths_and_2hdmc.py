@@ -45,13 +45,23 @@ def getcardsParams(cardname=None):
     split_cardname = cardname.split('/')
     split_cardname = split_cardname[-1]
     split_cardname = split_cardname.split('_')
-    mode = 'A' if 'AToZHTo2L2B'in split_cardname else('H')
-    if mode == 'H':
+    
+    if 'HToZATo2L2B' in split_cardname:
         mh2 = split_cardname[1]
         mh3 = split_cardname[2]
     else:
         mh3 = split_cardname[1]
         mh2 = split_cardname[2]
+    
+    mA = string_to_mass(mh3)
+    mH = string_to_mass(mh2)
+    if mA > mH:
+        mode = 'A'
+    elif mH >= mA and mH > 125.:
+        mode = 'H'
+    elif mH >= mA and mH <= 125.:
+        mode = 'h'
+    
     tb = split_cardname[3].replace('.dat','')
     return mh2, mh3, tb, mode
 
@@ -127,11 +137,12 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None, interference=False)
     param_card = param_card1.split('.decay')[0]
     mh2, mh3, tb, mode = getcardsParams(param_card)
     cardname="madgraphInputs_mH-{}_mA-{}_tb-{}_mode{}.log".format(mh2, mh3, tb, mode)
+    print( 'helooooooooooooooooooo', cardname )
     process =( 'bbH' if tb =='20p00' else('ggH'))
     
     decaychains = {'A': {'35': (5 , -5), '36': (23, 35) },
-                   'H': {'35': (23, 36), '36': (5, -5) },
-                   'h': {'25': (5 , -5), }
+                   'H': {'35': (23, 36), '36': (5 , -5) },
+                   'h': {'35': (23, 36), '36': (5 , -5) }
                    }
     aEWM1= 127.9
     aEW = 1./aEWM1
@@ -294,24 +305,27 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None, interference=False)
                     else:
                         outf.write(line2)
         
+        #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        # DEBUG 
         for id in ['35', '36']:
             channel_with_max_BR = max(branching_ratios[id], key=branching_ratios[id].get)
             val = sorted(list(branching_ratios[id].values()))
-            print( id, val )
             alloweddecays = ['{}  {}'.format(decaychains[mode][id][0], decaychains[mode][id][1]), '{}  {}'.format(decaychains[mode][id][1], decaychains[mode][id][0])]
-            idx = -2
+            
             if channel_with_max_BR not in alloweddecays:
                 logger.critical('** You need to be careful with : {}'.format(param_card))
                 logger.critical('   seems to be {} is the main channel that contribute to the total width of : {} ** '.format(channel_with_max_BR, id))
                 logger.critical('   BR:  {} -> {} = {}'.format( id, channel_with_max_BR, branching_ratios[id][channel_with_max_BR]))
                     
+            idx = -2
             openchannel = channel_with_max_BR
-            while openchannel not in alloweddecays:    
+            while (openchannel not in alloweddecays) and (abs(idx) in range(len(val))):    
                 res = val[idx]
                 pdgids = get_keys_from_value(branching_ratios[id], res)[0].split()
                 openchannel = '{}  {}'.format(pdgids[0], pdgids[1])
                 logger.critical(".{}.contribution. BR:  {} -> {}  = {} ".format(abs(idx), id, openchannel,res))
                 idx -=1 
+            
             for channel in alloweddecays:
                 if channel in branching_ratios[id].keys():
                     BR = partial_widths[id][channel] / total_widths[id]
@@ -319,10 +333,11 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None, interference=False)
                         logger.error(' Branching ratio larger than one for {}'.format(id))
                         logger.error(' Auto BR of {} = {}'.format(id, BR) )
                         
+        #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        print ( "{} successfully overwritten with 35 36 37 and 23 decay widths and branching ratios!".format(param_card) ) 
         # there will be no need for these cards 
         os.remove(param_card1)
         os.remove(param_card2)
-        print ( "{} successfully overwritten with 35 36 37 and 23 decay widths and branching ratios!".format(param_card) ) 
     else:
         logger.error(" XXX_param_card.dat with h2 decay OR XXX_param_card.dat with h3 and Z decay is missing, please run prepare_MG5_cards.py and then ./bin/mg5_aMC run_madwidths.sh from MG5_aMC_vX_X_X first !")
     return

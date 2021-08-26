@@ -21,14 +21,14 @@ cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo
 # run a test
 ./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards --mode H 
 # run all ZA run2 UL mass points 
-./prepare_MG5_cards.py --process bbH --templates run2Template_cards --queue condor_spool -s 4FS -pdf NNPDF31 -m H
+./prepare_MG5_cards.py -p bbH --templates run2Template_cards -q condor_spool -s 4FS -pdf NNPDF31 -m H
 ```
 - ``-p``/``--process``: bbH or ggH
 - ``-m``/``--mode``: H or A means ( H->ZA or A->ZH)
 - ``-q``/``--queue``: condor, condor_spool, slurm or 1nh 
 - ``-s``/``--flavourscheme``: Production scheme 4FS, 5FS or None
-- ``--interefernce``:  default False , `add process p p > h1 > etc ... @1`` 
-- ``--switch_bbH_To_LO`` : default True, produce bbH @ LO 
+- ``--interference``:  default False , add process p p > h1 > etc ... @1
+- ``--switch_bbH_To_LO`` : switch bbH computation at-leading-order, default False 
 - ``--customizecards``: default False, param_card.dat will be generated instead !
 - ``--templates`` : a directory with run cards for the two processes, each in a subdirectory
 - ``--gridpoints``: a directory with the JSON files with (mA, mH) points definitions

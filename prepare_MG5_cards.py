@@ -50,17 +50,18 @@ def which_points(fullsim=False, benchmarks=False, test=False, dataDir="./data"):
     grid['example_card'] = [
         ( 500, 300),]
     grid['benchmarks'] = [
-        ( 200, 125),
-        ( 250, 50), # FAIL MCCM validation 
-        # ATLAS benchmarks : https://arxiv.org/pdf/1804.01126.pdf
-        ( 500, 250), 
-        ( 240, 130), 
-       #( 500, 300), ( 550, 300), ( 670, 500), # resolved region 
-        ( 780, 680), 
-        ( 700, 200), 
-        ( 510, 130),
-        ( 750, 610), 
-       # ( 800, 140) nasty point with  broaden mass distribution 
+    #    ( 130, 50), (127, 30), (135, 80), 
+         ( 500, 50), (125, 200), (125, 50),
+    #    ( 250, 50), # FAIL MCCM validation 
+    #    # ATLAS benchmarks : https://arxiv.org/pdf/1804.01126.pdf
+    #    ( 500, 250), 
+    #    ( 240, 130), 
+    #   #NO ( 500, 300), ( 550, 300), ( 670, 500), # resolved region 
+    #    ( 780, 680), 
+    #    ( 700, 200), 
+    #    ( 510, 130),
+    #    ( 750, 610), 
+    #   #NO( 800, 140) nasty point with  broaden mass distribution 
         ] # forward region
     grid['fullsim'] = [
         #(MH, MA)
@@ -93,18 +94,18 @@ def float_to_mass(m):
 
 def getLHAPDF(lhaid=None, lhapdfsets="DEFAULT", flavourscheme=None):
     if lhapdfsets == 'DEFAULT':
-        logger.warning( '''The following ** $DEFAULT_PDF_SETS ** is shortcuts to have the PDF sets automatically added to the run_card at run time to avoid specifying them directly.\n 
+        logger.debug( '''The following ** $DEFAULT_PDF_SETS ** is shortcuts to have the PDF sets automatically added to the run_card at run time to avoid specifying them directly.\n 
                            Be careful this is valid at both LO and NLO !\n''')
         lhaid = '$DEFAULT_PDF_SETS'
     elif lhapdfsets == 'NNPDF31': 
         if flavourscheme == '4FS':
-            logger.info( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite 4-FlavourScheme set will be used instead\n 
+            logger.debug( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite 4-FlavourScheme set will be used instead\n 
                             LHA Name = NNPDF31_nnlo_as_0118_nf_4_mc_hessian\n 
                             LHA ID = 325500\n 
                             make sure this is compatible with the generated process in the proc_card and lhaid in the run_card **\n''')
             lhaid= 325500
         else:    
-            logger.info( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite set will be used instead\n 
+            logger.debug( '''No PDFSETS is given !**  LHA PDF set = NNPDF31  # Positive definite set will be used instead\n 
                             LHA Name = NNPDF31_nnlo_as_0118_mc_hessian_pdfas\n 
                             LHA ID = 325300\n 
                             make sure this is compatible with the generated process in the proc_card and lhaid in the run_card **\n''')
@@ -245,9 +246,13 @@ def compute_widths_BR_and_lambdas(mH, mA, mh, tb, process =None, pdfName="DEFAUL
 
 def filename(suffix=None, smpdetails=None, production_mode=None, templateDIR=None, template=False, mH=None, mA=None, tb=None):
      
+    cardName = ''
     if template:
         cardNames = glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), '{}/template_{}_*'.format(templateDIR, production_mode), '*_{}_{}.dat'.format(smpdetails, suffix)))
-        cardName = cardNames[0].split('{}/'.format(templateDIR))[-1]
+        if len(cardNames) == 0:
+            logger.debug( "{}.dat Not found".format(suffix))
+        else:
+            cardName = cardNames[0].split('{}/'.format(templateDIR))[-1]
 
     else:
         if production_mode.startswith('A'):
@@ -396,14 +401,16 @@ def prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb, lha
                          outf.write('                            !  which PDF set to include the uncertainties.\n')
                  else:
                      outf.write(line)
+    
     suffix = 'madspin_card'
-    #if 'ggH' not in smpdetails:
     madspin_card = os.path.join(templateDIR, filename(suffix, smpdetails, production_mode, templateDIR, template=True))
-    if os.path.exists(madspin_card):
+    if madspin_card != templateDIR :  
         shutil.copyfile(madspin_card, os.path.join(outputDIR, filename(suffix, smpdetails, production_mode, templateDIR, mH=mH, mA=mA, tb=tb)))
+    
     mass_mother = ( mA if production_mode.startswith('A') else (mH))
     mass_daughter = ( mH if production_mode.startswith('A') else (mA))
     print ('MG5 files prepared in {}/{}_{}_{}_{}_{}'.format(outputDIR, production_mode, mass_to_string(mass_mother), mass_to_string(mass_daughter), mass_to_string(tb), smpdetails))
+    
     return
 
 def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lhaid=None, queue="condor_spool", test=False, benchmarks=False, fullsim=False, gridpointsdata=None, templateDIR=None, saveprocessinfos=False, customizecards=False, mode=None, switch_bbH=False, interference=False):
@@ -433,8 +440,8 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         tb_list = [20.0]
         #tb_list = [ 0.5 ,  1.5 ,  4.5,  8. ,  20. ]
 
-    logger.info(" Please NOTE : For ggH process the Z decay is included in the Matrix Elemet, and h3 should be added in pythia8 gen-fragment or in madspin card !")
-    logger.info( " You choose {} to be generated for your gridpack production ! ".format( "customize_card.dat" if customizecards else "param_card.dat"))
+    logger.info("IMPORTANT: For ggH process the Z decay is included in the Matrix Elemet, and h3 should be added in pythia8 gen-fragment or in madspin card !")
+    logger.info("You choose {} to be generated for your gridpack production ! ".format( "customize_card.dat" if customizecards else "param_card.dat"))
     with open('prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()), 'w+') as outf, open('run_madwidths.sh', 'w+') as outf2, open('write_paramcards.sh', 'w+') as outf3:
         outf2.write('import model 2HDMtII_NLO\n')
         
@@ -502,7 +509,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
             for tb in tb_list:
                 wH, wA, wh2tobb, wh3tobb, l2, l3, lR7, sinbma, tb, xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH, HtoZABR, AtobbBR, AtoZHBR, HtobbBR = compute_widths_BR_and_lambdas(mH, mA, mh, tb, process = process, pdfName=pdfName, saveprocessinfos=saveprocessinfos)
                 ymb_H, ymb_A = Fix_Yukawa_sector(H, A, tb, sinbma, wh2tobb, wh3tobb, customizecards)
-                logger.info( 'ymb_H: {}       ymb_A: {} '.format(ymb_H, ymb_A))
+                logger.debug( 'ymb_H: {}       ymb_A: {} '.format(ymb_H, ymb_A))
                 prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb_A, lhaid, smpdetails, templateDIR, outputDIR, customizecards, production_mode)
                 
                 cardname = "{}_{}_{}_{}_{}".format(production_mode, mass_to_string(mother_mass), mass_to_string(daughter_mass), mass_to_string(tb), smpdetails)
@@ -569,10 +576,10 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
     os.chmod('run_madwidths.sh', os.stat('run_madwidths.sh').st_mode | stat.S_IXUSR)
     os.chmod('write_paramcards.sh', os.stat('write_paramcards.sh').st_mode | stat.S_IXUSR)
     if not customizecards:
-        logger.warning(' Please run_madwidths.sh to overwrite the param_card before you lunch your gridpack generations !')
-        logger.warning('cd MG5_aMC_vX_X_X')
-        logger.warning('./bin/mg5_aMC run_madwidths.sh')
-        logger.warning('bash ./write_paramcards.sh')
+        logger.info('Please run_madwidths.sh to overwrite the param_card before you lunch your gridpack generations !')
+        logger.info('cd MG5_aMC_vX_X_X')
+        logger.info('./bin/mg5_aMC run_madwidths.sh')
+        logger.info('bash ./write_paramcards.sh')
     print ('All commands prepared in ./prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()))
 
 if __name__ == '__main__':
