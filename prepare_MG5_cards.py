@@ -421,8 +421,9 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
     production_mode = 'HToZATo2L2B' if mode =='H' else ( 'AToZHTo2L2B' if mode=='A' else ('hToZATo2L2B'))
     scenario = 'HToZA' if mode =='H' else ( 'AToZH' if mode=='A' else ('hToZA'))
     
-    mh=125.
+    mh = 125.
     mb = 4.92 # mb(OS) https://arxiv.org/pdf/1610.07922.pdf page 7
+    mZ = 9.118760e+01
     pdfName, lhaid = getLHAPDF(lhapdfsets=lhapdfsets, lhaid=lhaid, flavourscheme=flavourscheme)
   
     if process=='ggH':
@@ -493,10 +494,11 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         for i, j in griddata:
             if mode == 'H':
                 H= i
-                A= j 
+                A= j
             else:
                 H = j
                 A = i
+            
             mH = float_to_mass(H)
             mA = float_to_mass(A)
             mHc= max(mH, mA)
@@ -506,17 +508,23 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
                 logger.debug("2HDMC can simulate points where mH < smHiggs for {} scenario ".format(scenario))
                 print('# skipping point (mH, mA) = ({}, {})'.format(mH, mA))
                 continue
+
+            if min(mH,mA) > max(mH,mA) - mZ:
+                logger.warning ("Z will be produced off-shell, make sure you want this !!")
+            
             for tb in tb_list:
                 wH, wA, wh2tobb, wh3tobb, l2, l3, lR7, sinbma, tb, xsec_ggH, err_integration_ggH, xsec_bbH, err_integration_bbH, HtoZABR, AtobbBR, AtoZHBR, HtobbBR = compute_widths_BR_and_lambdas(mH, mA, mh, tb, process = process, pdfName=pdfName, saveprocessinfos=saveprocessinfos)
                 ymb_H, ymb_A = Fix_Yukawa_sector(H, A, tb, sinbma, wh2tobb, wh3tobb, customizecards)
-                logger.debug( 'ymb_H: {}       ymb_A: {} '.format(ymb_H, ymb_A))
+                #logger.debug( 'ymb_H: {}       ymb_A: {} '.format(ymb_H, ymb_A))
                 prepare_cards(mH, mA, mh, mHc, mb, wH, wA, l2, l3, lR7, sinbma, tb, ymb_A, lhaid, smpdetails, templateDIR, outputDIR, customizecards, production_mode)
                 
                 cardname = "{}_{}_{}_{}_{}".format(production_mode, mass_to_string(mother_mass), mass_to_string(daughter_mass), mass_to_string(tb), smpdetails)
+                
                 if wH/mH > 0.1 or wA/mA > 0.1:
                     logger.critical(' width/mass >> 10 % Narrow-width approximation may not be valid for mass point: {}'.format(cardname)) 
                 if wH/mH < 10e-8 or wA/mA < 10e-8:
                     logger.critical(' width/mass < 10e-8 : Slows down the code and can lead to numerical instability')
+                
                 if saveprocessinfos:
                     xsc = (xsec_ggH if process=='ggH' else(xsec_bbH))
                     err = (err_integration_ggH if process=='ggH' else( err_integration_bbH))
