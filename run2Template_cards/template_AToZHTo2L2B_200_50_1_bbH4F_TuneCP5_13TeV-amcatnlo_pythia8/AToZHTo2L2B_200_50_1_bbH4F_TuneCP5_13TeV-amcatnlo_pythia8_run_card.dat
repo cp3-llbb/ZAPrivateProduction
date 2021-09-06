@@ -72,7 +72,7 @@
 # WARNING: PYTHIA6PT works only for processes without FSR!!!!          *
 #***********************************************************************
   PYTHIA8   = parton_shower
-  1.0 = shower_scale_factor ! multiply default shower starting
+  0.3535534 = shower_scale_factor ! multiply default shower starting
                                   ! scale by this factor
 #***********************************************************************
 # Renormalization and factorization scales                             *
