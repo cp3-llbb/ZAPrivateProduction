@@ -137,7 +137,6 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None, interference=False)
     param_card = param_card1.split('.decay')[0]
     mh2, mh3, tb, mode = getcardsParams(param_card)
     cardname="madgraphInputs_mH-{}_mA-{}_tb-{}_mode{}.log".format(mh2, mh3, tb, mode)
-    print( 'helooooooooooooooooooo', cardname )
     process =( 'bbH' if tb =='20p00' else('ggH'))
     
     decaychains = {'A': {'35': (5 , -5), '36': (23, 35) },
@@ -190,9 +189,12 @@ def set_ymb_to_MBOnshell(param_card1=None, param_card2=None, interference=False)
                         inf2h2_mode = 0
                         inf2h3_mode = 0
                         inf2hc_mode = 0
-                        line2_modf =getTHDMprecisions(line=line2, motherParticle='h', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
-                        total_widths['25'] = float(line2_modf.split()[-1])
-                        outf.write(line2_modf)
+                        if interference:
+                            line2_modf =getTHDMprecisions(line=line2, motherParticle='h', ID1=None, ID2=None, cardname= cardname, gettotal_width=True)
+                            total_widths['25'] = float(line2_modf.split()[-1])
+                            outf.write(line2_modf)
+                        else:
+                            outf.write(line2)
                     elif "DECAY  35" in line2:
                         inf2h1_mode = 0
                         inf2h2_mode = 1

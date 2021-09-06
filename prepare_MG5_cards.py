@@ -50,18 +50,18 @@ def which_points(fullsim=False, benchmarks=False, test=False, dataDir="./data"):
     grid['example_card'] = [
         ( 500, 300),]
     grid['benchmarks'] = [
-    #    ( 130, 50), (127, 30), (135, 80), 
-         ( 500, 50), (125, 200), (125, 50),
-    #    ( 250, 50), # FAIL MCCM validation 
-    #    # ATLAS benchmarks : https://arxiv.org/pdf/1804.01126.pdf
-    #    ( 500, 250), 
-    #    ( 240, 130), 
-    #   #NO ( 500, 300), ( 550, 300), ( 670, 500), # resolved region 
-    #    ( 780, 680), 
-    #    ( 700, 200), 
-    #    ( 510, 130),
-    #    ( 750, 610), 
-    #   #NO( 800, 140) nasty point with  broaden mass distribution 
+        ( 130, 50), (127, 30), (135, 80), 
+        ( 500, 50), (200, 125), (125, 50),
+        ( 250, 50), # FAIL MCCM validation 
+       # ATLAS benchmarks : https://arxiv.org/pdf/1804.01126.pdf
+        ( 500, 250), 
+        ( 240, 130), 
+        #( 500, 300), ( 550, 300), ( 670, 500), # resolved region 
+        ( 780, 680), 
+        ( 700, 200), 
+        ( 510, 130),
+        ( 750, 610), 
+        ( 800, 140) #nasty point with  broaden mass distribution 
         ] # forward region
     grid['fullsim'] = [
         #(MH, MA)
@@ -580,7 +580,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         if saveprocessinfos:
             f.close()
      
-    os.chmod('prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()), os.stat('prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower())).st_mode | stat.S_IXUSR)
+    os.chmod('./scripts/prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower()), os.stat('./scripts/prepare_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower())).st_mode | stat.S_IXUSR)
     os.chmod('run_madwidths.sh', os.stat('run_madwidths.sh').st_mode | stat.S_IXUSR)
     os.chmod('write_paramcards.sh', os.stat('write_paramcards.sh').st_mode | stat.S_IXUSR)
     if not customizecards:
@@ -588,7 +588,7 @@ def prepare_all_MG5_cards(process=None, flavourscheme=None, lhapdfsets=None, lha
         logger.info('cd MG5_aMC_vX_X_X')
         logger.info('./bin/mg5_aMC run_madwidths.sh')
         logger.info('bash ./write_paramcards.sh')
-    print ('All commands prepared in ./prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()))
+    print ('All commands prepared in ./scripts/prepare_{}_{}_{}_gridpacks.sh'.format(suffix, OrderOfcomputation.lower(), scenario.lower()))
 
 if __name__ == '__main__':
 
