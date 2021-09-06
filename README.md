@@ -83,8 +83,8 @@ python parsing.py name-of-cards
 ## GridPacks Generation:
 Inside the cards output directory (``example_cards`` or ``PrivateProd_run2``) a simple shell script is generated to produce all the gridpacks for each process.
 ```bash
-./prepare_example_nlo_gridpacks.sh
-./prepare_example_lo_gridpacks.sh
+./scripts/prepare_example_nlo_htoza_gridpacks.sh
+./scripts/prepare_example_lo_htoza_gridpacks.sh
 ```
 ## Trouble-Shooting:
 - For long jobs, the afs permissions may expire for the master job and it's subprocesses before completion, which will result in file read errors and failure. The command `k5reauth` allows the kerberos 5 permissions to be updated for a job and its subprocesses. Instructions to obtain and start a tmux session with k5reauth are given[here](https://hsf-training.github.io/analysis-essentials/shell-extras/screen2.html) and [here](https://twiki.cern.ch/twiki/bin/viewauth/CMS/QuickGuideMadGraph5aMCatNLO)
