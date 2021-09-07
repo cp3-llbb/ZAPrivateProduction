@@ -11,20 +11,25 @@ or a conda environment (which requires a few changes to the script), see the [in
 - For each process we have a dir template, whatever changes you need to make it has to be for these cards Only !
 ```bash
 # gg Fusion; LO Loop Induced 4F-scheme
-cd run2Template_cards/template_HToZATo2L2B_200_50_1_ggH_TuneCP5_13TeV_pythia8`
+cd run2Template_cards/template_HToZATo2L2B_200_50_1_ggH_TuneCP5_13TeV_pythia8
 # b-associated Production; NLO 4F-scheme
-cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8`
+cd run2Template_cards/template_HToZATo2L2B_200_50_1_bbH4F_TuneCP5_13TeV-amcatnlo_pythia8
 ```
+``X_X_X`` : MH_MA_tanbeta parameters
 ### How to Run:
 ```python
 # run a test
-./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards
+./prepare_MG5_cards.py --process bbH --test --templates run2Template_cards --mode H 
 # run all ZA run2 UL mass points 
-./prepare_MG5_cards.py --process bbH --templates run2Template_cards --queue condor_spool -s 4FS -pdf NNPDF31
+./prepare_MG5_cards.py -p bbH --templates run2Template_cards -q condor_spool -s 4FS -pdf NNPDF31 -m H
 ```
-- ``-p``/``process``: bbH or ggH
+- ``-p``/``--process``: bbH or ggH
+- ``-m``/``--mode``: H or A means ( H->ZA or A->ZH)
 - ``-q``/``--queue``: condor, condor_spool, slurm or 1nh 
 - ``-s``/``--flavourscheme``: Production scheme 4FS, 5FS or None
+- ``--interference``:  default False , add process p p > h1 > etc ... @1
+- ``--switch_bbH_To_LO`` : switch bbH computation at-leading-order, default False 
+- ``--customizecards``: default False, param_card.dat will be generated instead !
 - ``--templates`` : a directory with run cards for the two processes, each in a subdirectory
 - ``--gridpoints``: a directory with the JSON files with (mA, mH) points definitions
 - ``--fullsim``: Generate 21 signal mass points per process saved by default in ``fullsim/``
@@ -40,15 +45,17 @@ If you leave this out, the default will be set to ``$DEFAULT_PDF_SETS`` as short
 OR pass different ``--lhapdfsets`` with ``--lhaid``
 - ``--lhaid``: LHAID number , needed if you want to use different ``--lhapdfsets`` than the one mentionning above !
 Now in the dir cards the `blabla_param_card.dat` doesn't include the decay BR neither the total width for h3 and Z.
-You need to overwrite this card for each mass point to avoid madspin launch the automatic computation of the widths ! 
-Why you need to do that ? Because of these 2 open issue when using madspin [here](https://answers.launchpad.net/mg5amcnlo/+question/696286) and [here](https://answers.launchpad.net/mg5amcnlo/+question/696148)
+- ``--saveprocessinfos``: save BR, widths and xsc after running sushi. By default set to `False` , note that the code is much slower when this flag is turned on.
+- You need to overwrite this card for each mass point to avoid madspin launch the automatic computation of the widths ! 
+Why you need to do that ? Because of these 2 open issue when using madspin [here](https://answers.launchpad.net/mg5amcnlo/+question/696286) and [here](https://answers.launchpad.net/mg5amcnlo/+question/696148).
 So Simply run as follow: 
 ```bash 
 cd MG5_aMC_vX_X_X
 # compute the decay BR and width using fake ymb for all pdgid mentionned in the madspin card ! 
 ./bin/mg5_aMC run_madwidths.sh
-# set the yukawa coupling to the mb on-shell 
-./run_yukawa_to_mbonshell.sh
+# checks difference in width between MadWidth and 2HDMC, set the yukawa coupling to the mb on-shell  
+# and over-write the final blabla_param_card.dat 
+./write_paramcards.sh
 ```
 ## Cards Parsing First :
 The code live inside ``genproductions/bin/MadGraph5_aMCatNLO/Utilities/parsing_code`` dir .
@@ -56,12 +63,14 @@ The goal of the parsed code is the syntactic analysis of the Madgraph cards to c
 - The cards's right structure.
 - Wrong objects definition.
 - Possible bugs.
+
 Proc card checks:
 - Only one proton definition is permitted
 - The correct pdf-set used in the run card. 
 - The add-process line must contain generate line. The possible jet must be defined.
 - The model line must be defined.
 - The card must include output line with correct.
+
 Inside the Run card:
 - 13 TeV energy of collision.
 - Declaration of nevents
@@ -74,8 +83,8 @@ python parsing.py name-of-cards
 ## GridPacks Generation:
 Inside the cards output directory (``example_cards`` or ``PrivateProd_run2``) a simple shell script is generated to produce all the gridpacks for each process.
 ```bash
-./prepare_example_nlo_gridpacks.sh
-./prepare_example_lo_gridpacks.sh
+./scripts/prepare_example_nlo_htoza_gridpacks.sh
+./scripts/prepare_example_lo_htoza_gridpacks.sh
 ```
 ## Trouble-Shooting:
 - For long jobs, the afs permissions may expire for the master job and it's subprocesses before completion, which will result in file read errors and failure. The command `k5reauth` allows the kerberos 5 permissions to be updated for a job and its subprocesses. Instructions to obtain and start a tmux session with k5reauth are given[here](https://hsf-training.github.io/analysis-essentials/shell-extras/screen2.html) and [here](https://twiki.cern.ch/twiki/bin/viewauth/CMS/QuickGuideMadGraph5aMCatNLO)
